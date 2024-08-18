@@ -1,10 +1,12 @@
-﻿using Dalamud.Game.Command;
+using Dalamud.Game.Command;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using System.IO;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
 using SamplePlugin.Windows;
+using Dalamud.Game.Config;
+using System;
 
 namespace SamplePlugin;
 
@@ -13,8 +15,19 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
     [PluginService] internal static ITextureProvider TextureProvider { get; private set; } = null!;
     [PluginService] internal static ICommandManager CommandManager { get; private set; } = null!;
+    [PluginService] internal static IClientState clientState { get; private set; } = null!;
+    [PluginService] internal static IGameConfig GameConfig {  get; private set; } = null!;
+    [PluginService] internal static IPluginLog Logger { get; private set; } = null!;
+    //leaving this somewhere for now
+    //CutsceneMovieVoice possible values
+    // 0 = JP
+    // 1 = EN
+    // 2 = GER
+    // 3 = FR
+    // 42944967295 = Adjust to client,could just be junk/not set if adjust to client is set
 
-    private const string CommandName = "/pmycommand";
+
+
 
     public Configuration Configuration { get; init; }
 
@@ -28,16 +41,18 @@ public sealed class Plugin : IDalamudPlugin
 
         // you might normally want to embed resources and load them from the manifest stream
         var goatImagePath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "goat.png");
-
         ConfigWindow = new ConfigWindow(this);
         MainWindow = new MainWindow(this, goatImagePath);
-
         WindowSystem.AddWindow(ConfigWindow);
         WindowSystem.AddWindow(MainWindow);
 
-        CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
+        CommandManager.AddHandler("/checkcurrvoice", new CommandInfo(OnCommand)
         {
-            HelpMessage = "A useful message to display in /xlhelp"
+            HelpMessage = "Check what value is Cutscene Audio right now"
+        });
+        CommandManager.AddHandler("/checkcurrlocation", new CommandInfo(OnCommand)
+        {
+            HelpMessage = "Check where the player is right now"
         });
 
         PluginInterface.UiBuilder.Draw += DrawUI;
@@ -57,13 +72,30 @@ public sealed class Plugin : IDalamudPlugin
         ConfigWindow.Dispose();
         MainWindow.Dispose();
 
-        CommandManager.RemoveHandler(CommandName);
+        CommandManager.RemoveHandler("/checkcurrvoice");
+        CommandManager.RemoveHandler("/checkcurrlocation");
     }
 
     private void OnCommand(string command, string args)
     {
-        // in response to the slash command, just toggle the display status of our main ui
-        ToggleMainUI();
+
+        if (command == "/checkcurrvoice")
+        {
+            try
+            {
+                uint csMovieVoice = 0;
+                GameConfig.System.TryGetUInt("CutsceneMovieVoice", out csMovieVoice);
+                Logger.Debug("Current voice value:{0}", csMovieVoice);
+            }
+            catch (Exception e)
+            {
+                Logger.Debug(e.ToString());
+            }
+
+        }else if (command == "/checkcurrlocation"){
+            Logger.Debug(clientState.MapId.ToString());
+        }
+        
     }
 
     private void DrawUI() => WindowSystem.Draw();
