@@ -7,6 +7,29 @@
         "requested": "[2.1.13, )",
         "resolved": "2.1.13",
         "contentHash": "rMN1omGe8536f4xLMvx9NwfvpAc9YFFfeXJ1t4P4PE6Gu8WCIoFliR1sh07hM+bfODmesk/dvMbji7vNI+B/pQ=="
+      },
+      "Lumina": {
+        "type": "Direct",
+        "requested": "[4.1.2, )",
+        "resolved": "4.1.2",
+        "contentHash": "dFPDZwJBWeYcR6y5k7NHoZRSSz2ZIbEjcjiqGbEu1DsL15ovmyZkeouEGilK2pewbin78Mz+1lwHi79LwDO7tg==",
+        "dependencies": {
+          "Microsoft.Extensions.ObjectPool": "9.0.0-preview.1.24081.5"
+        }
+      },
+      "Lumina.Excel": {
+        "type": "Direct",
+        "requested": "[7.0.1, )",
+        "resolved": "7.0.1",
+        "contentHash": "6jLesCVDfBW1PAMOBtzzrk+zS4F+WEKI/y3iKuV2lTXqWnuguVuFXdZQvhRQryQ5ruNczFmNo8pZeU0yOfqIKA==",
+        "dependencies": {
+          "Lumina": "3.15.2"
+        }
+      },
+      "Microsoft.Extensions.ObjectPool": {
+        "type": "Transitive",
+        "resolved": "9.0.0-preview.1.24081.5",
+        "contentHash": "aAR7YW+pUUdvHk3vj7GtAi71dWGDIuY9270lsmQ6lKw23zzY+r8pLP3cGNbJdlnA9VWl+S+gnIVkBCqj2ROlEg=="
       }
     }
   }
