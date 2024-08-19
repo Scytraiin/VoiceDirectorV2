@@ -31,7 +31,9 @@ public sealed class Plugin : IDalamudPlugin
     // 3 = FR
     // 42944967295 = Adjust to client,could just be junk/not set if adjust to client is set
 
-
+    //Test
+    //map id:d2fa/00
+    //map name: Thok ast Thok
 
 
     public Configuration Configuration { get; init; }
@@ -68,6 +70,8 @@ public sealed class Plugin : IDalamudPlugin
 
         // Adds another button that is doing the same but for the main ui of the plugin
         PluginInterface.UiBuilder.OpenMainUi += ToggleMainUI;
+
+        clientState.TerritoryChanged += OnZoneChange;
     }
 
     public void Dispose()
@@ -76,7 +80,7 @@ public sealed class Plugin : IDalamudPlugin
 
         ConfigWindow.Dispose();
         MainWindow.Dispose();
-
+        clientState.TerritoryChanged -= OnZoneChange;
         CommandManager.RemoveHandler("/checkcurrvoice");
         CommandManager.RemoveHandler("/checkcurrlocation");
     }
@@ -99,6 +103,7 @@ public sealed class Plugin : IDalamudPlugin
 
         }else if (command == "/checkcurrlocation"){
             string currId = clientState.MapId.ToString();
+            
             var currMap = DataManager.GetExcelSheet<Maps>()!.GetRow(clientState.MapId);
             if (currMap != null)
             {
@@ -117,6 +122,33 @@ public sealed class Plugin : IDalamudPlugin
             }
         }
         
+    }
+
+    private void OnZoneChange(ushort e)
+    {
+        Logger.Debug("Zone changed");
+
+        var currMap = DataManager.GetExcelSheet<Maps>()!.GetRow(clientState.MapId);
+        if (currMap != null && currMap.Id == "d2fa/00")
+        {
+            try
+            {
+                Logger.Debug("Current map id:{0}", currMap.Id.RawString);
+                Logger.Debug("Current map name:{0}", currMap.PlaceName.Value.Name.ToString());
+                Logger.Debug("Map is Thok ast Thok yay");
+                Logger.Debug("Attempting config change,cutscene voice to EN");
+                GameConfig.System.Set("CutsceneMovieVoice", 1);
+            }
+            catch (Exception ee)
+            {
+                Logger.Error("Tried to change config but exception:{0}", ee.ToString());
+            }
+        }
+        else
+        {
+            Logger.Debug("Map is not Thok ast Thok,revert to JP");
+            GameConfig.System.Set("CutsceneMovieVoice", 0);
+        }
     }
 
     private void DrawUI() => WindowSystem.Draw();
