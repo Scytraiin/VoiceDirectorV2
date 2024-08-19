@@ -6,7 +6,10 @@ using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
 using SamplePlugin.Windows;
 using Dalamud.Game.Config;
+using Lumina.Excel.GeneratedSheets;
+using Maps = Lumina.Excel.GeneratedSheets.Map;
 using System;
+using System.Linq;
 
 namespace SamplePlugin;
 
@@ -16,6 +19,8 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static ITextureProvider TextureProvider { get; private set; } = null!;
     [PluginService] internal static ICommandManager CommandManager { get; private set; } = null!;
     [PluginService] internal static IClientState clientState { get; private set; } = null!;
+
+    [PluginService] internal static IDataManager DataManager { get; private set; } = null!;
     [PluginService] internal static IGameConfig GameConfig {  get; private set; } = null!;
     [PluginService] internal static IPluginLog Logger { get; private set; } = null!;
     //leaving this somewhere for now
@@ -45,7 +50,7 @@ public sealed class Plugin : IDalamudPlugin
         MainWindow = new MainWindow(this, goatImagePath);
         WindowSystem.AddWindow(ConfigWindow);
         WindowSystem.AddWindow(MainWindow);
-
+        
         CommandManager.AddHandler("/checkcurrvoice", new CommandInfo(OnCommand)
         {
             HelpMessage = "Check what value is Cutscene Audio right now"
@@ -89,11 +94,27 @@ public sealed class Plugin : IDalamudPlugin
             }
             catch (Exception e)
             {
-                Logger.Debug(e.ToString());
+                Logger.Error(e.ToString());
             }
 
         }else if (command == "/checkcurrlocation"){
-            Logger.Debug(clientState.MapId.ToString());
+            string currId = clientState.MapId.ToString();
+            var currMap = DataManager.GetExcelSheet<Maps>()!.GetRow(clientState.MapId);
+            if (currMap != null)
+            {
+                try
+                {
+                    Logger.Debug("Current map id:{0}", currMap.Id.RawString);
+                    Logger.Debug("Current map name:{0}", currMap.PlaceName.Value.Name.ToString());
+                } catch (Exception e)
+                {
+                    Logger.Error("Tried to get name or id of map but got exception:{0}",e.ToString());
+                }
+            }
+            else
+            {
+                Logger.Debug("could not find mapId in database,id searched:{0}", currId);
+            }
         }
         
     }
