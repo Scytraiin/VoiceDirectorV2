@@ -10,6 +10,7 @@ using Lumina.Excel.GeneratedSheets;
 using Maps = Lumina.Excel.GeneratedSheets.Map;
 using System;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace SamplePlugin;
 
@@ -30,7 +31,13 @@ public sealed class Plugin : IDalamudPlugin
     // 2 = GER
     // 3 = FR
     // 42944967295 = Adjust to client,could just be junk/not set if adjust to client is set
-
+    enum CutsceneMovieVoiceValue : ushort
+    {
+        Japanese = 0,
+        English = 1,
+        German = 2,
+        French = 3
+    }//Adjust to client being an option seems dumb just ask the user for a prefered default
     //Test
     //map id:d2fa/00
     //map name: Thok ast Thok
@@ -42,6 +49,9 @@ public sealed class Plugin : IDalamudPlugin
     private ConfigWindow ConfigWindow { get; init; }
     private MainWindow MainWindow { get; init; }
 
+    //hashmap of mapids as keys and cutsceneMovieVoice enums as values
+    //sounds the most straightforward,then serialiaze for persitence/sharing?
+    Dictionary<uint, CutsceneMovieVoiceValue> replacements = new Dictionary<uint, CutsceneMovieVoiceValue>();
     public Plugin()
     {
         Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
@@ -53,6 +63,7 @@ public sealed class Plugin : IDalamudPlugin
         WindowSystem.AddWindow(ConfigWindow);
         WindowSystem.AddWindow(MainWindow);
         
+        
         CommandManager.AddHandler("/checkcurrvoice", new CommandInfo(OnCommand)
         {
             HelpMessage = "Check what value is Cutscene Audio right now"
@@ -60,6 +71,10 @@ public sealed class Plugin : IDalamudPlugin
         CommandManager.AddHandler("/checkcurrlocation", new CommandInfo(OnCommand)
         {
             HelpMessage = "Check where the player is right now"
+        });
+        CommandManager.AddHandler("/getsheets", new CommandInfo(OnCommand)
+        {
+            HelpMessage = "Blabla"
         });
 
         PluginInterface.UiBuilder.Draw += DrawUI;
@@ -120,6 +135,12 @@ public sealed class Plugin : IDalamudPlugin
             {
                 Logger.Debug("could not find mapId in database,id searched:{0}", currId);
             }
+        }else if(command == "/getsheets") {
+            var allMaps = DataManager.GetExcelSheet<Maps>();
+            foreach (Map m in allMaps ) {
+                Logger.Debug(m.PlaceNameSub.Value.Name.ToString());
+            }
+
         }
         
     }
