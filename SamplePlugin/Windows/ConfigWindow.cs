@@ -31,45 +31,82 @@ public class ConfigWindow : Window, IDisposable
 
     }
 
+    private string GetNameFromEnum(CutsceneMovieVoiceValue csValue)
+    {
+        switch (csValue)
+        {
+            case CutsceneMovieVoiceValue.Japanese:return "Japanese";break;
+            case CutsceneMovieVoiceValue.English:return "English";break;
+            case CutsceneMovieVoiceValue.German:return "German";break;
+            case CutsceneMovieVoiceValue.French:return "French";break;
+            default:return "How did you do that";break;
+        }
+    }
+
     public override void Draw()
     {
         var mappies = Plugin.DataManager.GetExcelSheet<Maps>();
-        uint i = 0;
-        foreach (var item in mappies)
+        if (ImGui.BeginCombo("picker", "location"))
         {
-            i++;
-            ImGui.Text(item.PlaceName.Value.Name.ToString() + item.Id);
-            if (i > 10)
+            foreach (var item in mappies)
             {
-                break;
+                bool is_sel = false;
+                string map_sel = item.Id;
+                if (ImGui.Selectable(item.PlaceName.Value.Name.ToString(),is_sel)){
+                    Plugin.Logger.Debug("selected:" + item.PlaceName.Value.Name.ToString());
+                    is_sel = true;
+                    map_sel = item.Id;
+                }
             }
         }
-        // can't ref a property, so use a local copy
-        var configValue = Configuration.SomePropertyToBeSavedAndWithADefault;
-        if (ImGui.Checkbox("Random Config Bool", ref configValue))
+        ImGui.EndCombo();
+        if (ImGui.BeginCombo("Language picker", "language"))
         {
-            Configuration.SomePropertyToBeSavedAndWithADefault = configValue;
-            // can save immediately on change, if you don't want to provide a "Save and Close" button
-            Configuration.Save();
+            foreach (CutsceneMovieVoiceValue csVoice in Enum.GetValues(typeof(CutsceneMovieVoiceValue)))
+            {
+                bool is_sel = false;
+                CutsceneMovieVoiceValue language_sel = CutsceneMovieVoiceValue.English;
+                    if (ImGui.Selectable(GetNameFromEnum(csVoice), is_sel))
+                    {
+                        Plugin.Logger.Debug("selected:" + GetNameFromEnum(csVoice));
+                        is_sel = true;
+                        language_sel = csVoice;
+                    }
+            }
         }
-
-        var movable = Configuration.IsConfigWindowMovable;
-        if (ImGui.Checkbox("Movable Config Window", ref movable))
-        {
-            Configuration.IsConfigWindowMovable = movable;
-            Configuration.Save();
-        }
-
-
+        ImGui.EndCombo();
         if (ImGui.BeginTable("fuckinghell", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.Resizable))
         {
             ImGui.TableNextColumn();
             ImGui.Text("Maps");
             ImGui.TableNextColumn();
             ImGui.Text("Voice");
-            ImGui.TableNextColumn();
+            foreach (var item in mappies)
+            {
+                ImGui.TableNextColumn();
+                ImGui.Text(item.PlaceName.Value.Name.ToString() + "||Subsection:" + item.PlaceNameSub.Value.Name.ToString());
+                ImGui.TableNextColumn();
+                ImGui.Text("replaced language here");
+            }
+        }
+            ImGui.EndTable();
+            // can't ref a property, so use a local copy
+            var configValue = Configuration.SomePropertyToBeSavedAndWithADefault;
+            if (ImGui.Checkbox("Random Config Bool", ref configValue))
+            {
+                Configuration.SomePropertyToBeSavedAndWithADefault = configValue;
+                // can save immediately on change, if you don't want to provide a "Save and Close" button
+                Configuration.Save();
+            }
+
+            var movable = Configuration.IsConfigWindowMovable;
+            if (ImGui.Checkbox("Movable Config Window", ref movable))
+            {
+                Configuration.IsConfigWindowMovable = movable;
+                Configuration.Save();
+            }
+
 
         }
-        ImGui.EndTable();
+
     }
-}

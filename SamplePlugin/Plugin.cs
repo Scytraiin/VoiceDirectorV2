@@ -14,6 +14,21 @@ using System.Collections.Generic;
 
 namespace SamplePlugin;
 
+//leaving this somewhere for now
+//CutsceneMovieVoice possible values
+// 0 = JP
+// 1 = EN
+// 2 = GER
+// 3 = FR
+// 42944967295 = Adjust to client,could just be junk/not set if adjust to client is set
+enum CutsceneMovieVoiceValue : ushort
+{
+    Japanese = 0,
+    English = 1,
+    German = 2,
+    French = 3
+}//Adjust to client being an option seems dumb just ask the user for a prefered default
+
 public sealed class Plugin : IDalamudPlugin
 {
     [PluginService] internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
@@ -24,20 +39,6 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IDataManager DataManager { get; private set; } = null!;
     [PluginService] internal static IGameConfig GameConfig {  get; private set; } = null!;
     [PluginService] internal static IPluginLog Logger { get; private set; } = null!;
-    //leaving this somewhere for now
-    //CutsceneMovieVoice possible values
-    // 0 = JP
-    // 1 = EN
-    // 2 = GER
-    // 3 = FR
-    // 42944967295 = Adjust to client,could just be junk/not set if adjust to client is set
-    enum CutsceneMovieVoiceValue : ushort
-    {
-        Japanese = 0,
-        English = 1,
-        German = 2,
-        French = 3
-    }//Adjust to client being an option seems dumb just ask the user for a prefered default
     //Test
     //map id:d2fa/00
     //map name: Thok ast Thok
