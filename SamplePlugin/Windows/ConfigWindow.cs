@@ -10,6 +10,7 @@ using Lumina.Excel.GeneratedSheets;
 using Lumina.Excel.GeneratedSheets2;
 using System.Collections.Generic;
 using System.Linq;
+using Dalamud.Utility;
 
 namespace SamplePlugin.Windows;
 
@@ -72,7 +73,8 @@ public class ConfigWindow : Window, IDisposable
         {
             foreach (var item in mappies)
             {
-                if (ImGui.Selectable(item.PlaceName.Value.Name.ToString() + "||" + item.PlaceNameSub.Value.Name.ToString(), item.Id == map_id_sel)){
+                var resolvedName = item.PlaceNameSub.Value.Name.ToString().IsNullOrEmpty() ? item.PlaceName.Value.Name.ToString() : item.PlaceName.Value.Name.ToString() + "||" + item.PlaceNameSub.Value.Name.ToString();
+                if (ImGui.Selectable(resolvedName, item.Id == map_id_sel)){
                     Plugin.Logger.Debug("selected:" + item.PlaceName.Value.Name.ToString());
                     map_id_sel = item.Id;
                     Configuration.previewSelectedMapName = item.PlaceName.Value.Name.ToString() + "||" + item.PlaceNameSub.Value.Name.ToString();
@@ -102,6 +104,8 @@ public class ConfigWindow : Window, IDisposable
             Configuration.Save();
             Plugin.Logger.Debug("Added replacement for map id:{0} with language {1}", [map_id_sel,language_sel]);
         }
+        ImGui.Separator();
+        ImGui.Text("List of current changes");
         if (ImGui.BeginTable("changetable", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.Resizable))
         {
             ImGui.TableNextColumn();
