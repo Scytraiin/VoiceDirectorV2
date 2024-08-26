@@ -18,6 +18,7 @@ public class ConfigWindow : Window, IDisposable
     private Configuration Configuration;
     private string map_id_sel = string.Empty;
     private CutsceneMovieVoiceValue language_sel = CutsceneMovieVoiceValue.English;
+    private Random rand = new Random();
     // We give this window a constant ID using ###
     // This allows for labels being dynamic, like "{FPS Counter}fps###XYZ counter window",
     // and the window ID will always be "###XYZ counter window" for ImGui
@@ -114,6 +115,17 @@ public class ConfigWindow : Window, IDisposable
                 ImGui.Text(item.PlaceName.Value.Name.ToString() + "||" + item.PlaceNameSub.Value.Name.ToString());
                 ImGui.TableNextColumn();
                 ImGui.Text(GetNameFromEnum(entry.Value));
+                ImGui.SameLine();
+                ImGui.PushID(entry.Key);
+                if (ImGui.SmallButton("Remove"))
+                {
+                    Dictionary<string, CutsceneMovieVoiceValue> rep = Configuration.replacements;
+                    rep.Remove(entry.Key);
+                    Configuration.replacements = rep;
+                    Configuration.Save();
+                    Plugin.Logger.Debug("Removed replacement for map id:{0} with language {1}", [item.Id, entry.Value]);
+                }
+                ImGui.PopID();
             }
             ImGui.EndTable();
         }
