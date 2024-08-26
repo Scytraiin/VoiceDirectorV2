@@ -37,7 +37,7 @@ public class ConfigWindow : Window, IDisposable
 
     }
 
-    private string GetNameFromEnum(CutsceneMovieVoiceValue csValue)
+    public static string GetNameFromEnum(CutsceneMovieVoiceValue csValue)
     {
         switch (csValue)
         {

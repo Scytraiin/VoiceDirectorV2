@@ -100,6 +100,7 @@ public sealed class Plugin : IDalamudPlugin
         clientState.TerritoryChanged -= OnZoneChange;
         CommandManager.RemoveHandler("/checkcurrvoice");
         CommandManager.RemoveHandler("/checkcurrlocation");
+        CommandManager.RemoveHandler("/getsheets");
     }
 
     private void OnCommand(string command, string args)
@@ -149,6 +150,21 @@ public sealed class Plugin : IDalamudPlugin
 
     private void OnZoneChange(ushort e)
     {
+        var currMap = DataManager.GetExcelSheet<Maps>()!.GetRow(clientState.MapId);
+        if (replacements.ContainsKey(currMap.Id))
+        {
+            Logger.Debug("Attempting config change cutscene voice to {0}, true value:{1}, for map id:{2}", [ConfigWindow.GetNameFromEnum(replacements[currMap.Id]), (ushort)replacements[currMap.Id],currMap.Id]);
+            GameConfig.System.Set("CutsceneMovieVoice", ((ushort)replacements[currMap.Id]));
+        }
+        else if (GameConfig.System.GetUInt("CutsceneMovieVoice") != ((ushort)Configuration.defaultLanguage))
+        {
+            Logger.Debug("No changes found for map and language does not match default so set it back to default");
+            GameConfig.System.Set("CutsceneMovieVoice",(ushort)Configuration.defaultLanguage);
+        }else
+        {
+            Logger.Debug("No changes found but language already match default,no config changes necessary");
+        }
+        /*
         Logger.Debug("Zone changed");
 
         var currMap = DataManager.GetExcelSheet<Maps>()!.GetRow(clientState.MapId);
@@ -172,6 +188,8 @@ public sealed class Plugin : IDalamudPlugin
             Logger.Debug("Map is not Thok ast Thok,revert to JP");
             GameConfig.System.Set("CutsceneMovieVoice", 0);
         }
+
+        */
     }
 
     private void DrawUI() => WindowSystem.Draw();
