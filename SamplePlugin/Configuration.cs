@@ -1,4 +1,4 @@
-﻿using Dalamud.Configuration;
+using Dalamud.Configuration;
 using Dalamud.Plugin;
 using System;
 
@@ -11,6 +11,11 @@ public class Configuration : IPluginConfiguration
 
     public bool IsConfigWindowMovable { get; set; } = true;
     public bool SomePropertyToBeSavedAndWithADefault { get; set; } = true;
+
+    public CutsceneMovieVoiceValue defaultLanguage { get; set; } = CutsceneMovieVoiceValue.English;
+
+    public string previewSelectedMapName { get; set; } = "Location";
+    public CutsceneMovieVoiceValue previewSelectedLanguage { get; set; } = CutsceneMovieVoiceValue.English;
 
     // the below exist just to make saving less cumbersome
     public void Save()

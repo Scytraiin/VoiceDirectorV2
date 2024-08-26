@@ -6,6 +6,8 @@ using Dalamud.Interface.Utility.Raii;
 using Maps = Lumina.Excel.GeneratedSheets.Map;
 using Dalamud.IoC;
 using Dalamud.Plugin.Services;
+using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.GeneratedSheets2;
 
 namespace SamplePlugin.Windows;
 
@@ -46,36 +48,51 @@ public class ConfigWindow : Window, IDisposable
     public override void Draw()
     {
         var mappies = Plugin.DataManager.GetExcelSheet<Maps>();
-        if (ImGui.BeginCombo("picker", "location"))
-        {
-            foreach (var item in mappies)
-            {
-                bool is_sel = false;
-                string map_sel = item.Id;
-                if (ImGui.Selectable(item.PlaceName.Value.Name.ToString(),is_sel)){
-                    Plugin.Logger.Debug("selected:" + item.PlaceName.Value.Name.ToString());
-                    is_sel = true;
-                    map_sel = item.Id;
-                }
-            }
-        }
-        ImGui.EndCombo();
-        if (ImGui.BeginCombo("Language picker", "language"))
+        string map_name_sel = "Location";
+        string map_id_sel = string.Empty;
+        string map_sel = string.Empty;
+        if (ImGui.BeginCombo("Default Language", GetNameFromEnum(Configuration.defaultLanguage)))
         {
             foreach (CutsceneMovieVoiceValue csVoice in Enum.GetValues(typeof(CutsceneMovieVoiceValue)))
             {
-                bool is_sel = false;
+                if (ImGui.Selectable(GetNameFromEnum(csVoice), Configuration.defaultLanguage == csVoice))
+                {
+                    Plugin.Logger.Debug("selected:" + GetNameFromEnum(csVoice));
+                    Configuration.defaultLanguage = csVoice;
+                    Configuration.Save();
+                }
+            }
+            ImGui.EndCombo();
+
+        }
+        ImGui.Separator();
+        if (ImGui.BeginCombo("Location picker",Configuration.previewSelectedMapName))
+        {
+            foreach (var item in mappies)
+            {
+                if (ImGui.Selectable(item.PlaceName.Value.Name.ToString() + "||" + item.PlaceNameSub.Value.Name.ToString(), item.Id == map_sel)){
+                    Plugin.Logger.Debug("selected:" + item.PlaceName.Value.Name.ToString());
+                    map_sel = item.Id;
+                    Configuration.previewSelectedMapName = item.PlaceName.Value.Name.ToString() + "||" + item.PlaceNameSub.Value.Name.ToString();
+                }
+            }
+            ImGui.EndCombo();
+        }
+        
+        if (ImGui.BeginCombo("Language picker", GetNameFromEnum(Configuration.previewSelectedLanguage)))
+        {
+            foreach (CutsceneMovieVoiceValue csVoice in Enum.GetValues(typeof(CutsceneMovieVoiceValue)))
+            {
                 CutsceneMovieVoiceValue language_sel = CutsceneMovieVoiceValue.English;
-                    if (ImGui.Selectable(GetNameFromEnum(csVoice), is_sel))
+                    if (ImGui.Selectable(GetNameFromEnum(csVoice), csVoice == Configuration.previewSelectedLanguage))
                     {
                         Plugin.Logger.Debug("selected:" + GetNameFromEnum(csVoice));
-                        is_sel = true;
-                        language_sel = csVoice;
+                        Configuration.previewSelectedLanguage = csVoice;
                     }
             }
+            ImGui.EndCombo();
         }
-        ImGui.EndCombo();
-        if (ImGui.BeginTable("fuckinghell", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.Resizable))
+        if (ImGui.BeginTable("changetable", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.Resizable))
         {
             ImGui.TableNextColumn();
             ImGui.Text("Maps");
@@ -84,12 +101,12 @@ public class ConfigWindow : Window, IDisposable
             foreach (var item in mappies)
             {
                 ImGui.TableNextColumn();
-                ImGui.Text(item.PlaceName.Value.Name.ToString() + "||Subsection:" + item.PlaceNameSub.Value.Name.ToString());
+                ImGui.Text(item.PlaceName.Value.Name.ToString() + "||" + item.PlaceNameSub.Value.Name.ToString());
                 ImGui.TableNextColumn();
                 ImGui.Text("replaced language here");
             }
-        }
             ImGui.EndTable();
+        }
             // can't ref a property, so use a local copy
             var configValue = Configuration.SomePropertyToBeSavedAndWithADefault;
             if (ImGui.Checkbox("Random Config Bool", ref configValue))

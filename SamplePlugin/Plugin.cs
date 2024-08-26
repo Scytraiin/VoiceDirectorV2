@@ -21,7 +21,7 @@ namespace SamplePlugin;
 // 2 = GER
 // 3 = FR
 // 42944967295 = Adjust to client,could just be junk/not set if adjust to client is set
-enum CutsceneMovieVoiceValue : ushort
+public enum CutsceneMovieVoiceValue : ushort
 {
     Japanese = 0,
     English = 1,
