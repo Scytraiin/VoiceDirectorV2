@@ -1,6 +1,7 @@
 using Dalamud.Configuration;
 using Dalamud.Plugin;
 using System;
+using System.Collections.Generic;
 
 namespace SamplePlugin;
 
@@ -16,6 +17,8 @@ public class Configuration : IPluginConfiguration
 
     public string previewSelectedMapName { get; set; } = "Location";
     public CutsceneMovieVoiceValue previewSelectedLanguage { get; set; } = CutsceneMovieVoiceValue.English;
+
+    public Dictionary<string, CutsceneMovieVoiceValue> replacements = new Dictionary<string, CutsceneMovieVoiceValue>();
 
     // the below exist just to make saving less cumbersome
     public void Save()

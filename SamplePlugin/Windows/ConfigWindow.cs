@@ -8,12 +8,16 @@ using Dalamud.IoC;
 using Dalamud.Plugin.Services;
 using Lumina.Excel.GeneratedSheets;
 using Lumina.Excel.GeneratedSheets2;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace SamplePlugin.Windows;
 
 public class ConfigWindow : Window, IDisposable
 {
     private Configuration Configuration;
+    private string map_id_sel = string.Empty;
+    private CutsceneMovieVoiceValue language_sel = CutsceneMovieVoiceValue.English;
     // We give this window a constant ID using ###
     // This allows for labels being dynamic, like "{FPS Counter}fps###XYZ counter window",
     // and the window ID will always be "###XYZ counter window" for ImGui
@@ -48,9 +52,6 @@ public class ConfigWindow : Window, IDisposable
     public override void Draw()
     {
         var mappies = Plugin.DataManager.GetExcelSheet<Maps>();
-        string map_name_sel = "Location";
-        string map_id_sel = string.Empty;
-        string map_sel = string.Empty;
         if (ImGui.BeginCombo("Default Language", GetNameFromEnum(Configuration.defaultLanguage)))
         {
             foreach (CutsceneMovieVoiceValue csVoice in Enum.GetValues(typeof(CutsceneMovieVoiceValue)))
@@ -70,9 +71,9 @@ public class ConfigWindow : Window, IDisposable
         {
             foreach (var item in mappies)
             {
-                if (ImGui.Selectable(item.PlaceName.Value.Name.ToString() + "||" + item.PlaceNameSub.Value.Name.ToString(), item.Id == map_sel)){
+                if (ImGui.Selectable(item.PlaceName.Value.Name.ToString() + "||" + item.PlaceNameSub.Value.Name.ToString(), item.Id == map_id_sel)){
                     Plugin.Logger.Debug("selected:" + item.PlaceName.Value.Name.ToString());
-                    map_sel = item.Id;
+                    map_id_sel = item.Id;
                     Configuration.previewSelectedMapName = item.PlaceName.Value.Name.ToString() + "||" + item.PlaceNameSub.Value.Name.ToString();
                 }
             }
@@ -83,14 +84,22 @@ public class ConfigWindow : Window, IDisposable
         {
             foreach (CutsceneMovieVoiceValue csVoice in Enum.GetValues(typeof(CutsceneMovieVoiceValue)))
             {
-                CutsceneMovieVoiceValue language_sel = CutsceneMovieVoiceValue.English;
                     if (ImGui.Selectable(GetNameFromEnum(csVoice), csVoice == Configuration.previewSelectedLanguage))
                     {
                         Plugin.Logger.Debug("selected:" + GetNameFromEnum(csVoice));
                         Configuration.previewSelectedLanguage = csVoice;
+                    language_sel = csVoice;
                     }
             }
             ImGui.EndCombo();
+        }
+        if (ImGui.Button("Add changes"))
+        {
+            Dictionary<string, CutsceneMovieVoiceValue> rep = Configuration.replacements;
+            rep.Add(map_id_sel,language_sel);
+            Configuration.replacements = rep;
+            Configuration.Save();
+            Plugin.Logger.Debug("Added replacement for map id:{0} with language {1}", [map_id_sel,language_sel]);
         }
         if (ImGui.BeginTable("changetable", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.Resizable))
         {
@@ -98,30 +107,16 @@ public class ConfigWindow : Window, IDisposable
             ImGui.Text("Maps");
             ImGui.TableNextColumn();
             ImGui.Text("Voice");
-            foreach (var item in mappies)
+            foreach (KeyValuePair<string,CutsceneMovieVoiceValue> entry in Configuration.replacements)
             {
                 ImGui.TableNextColumn();
+                var item = mappies.Where(x => x.Id == entry.Key).First();
                 ImGui.Text(item.PlaceName.Value.Name.ToString() + "||" + item.PlaceNameSub.Value.Name.ToString());
                 ImGui.TableNextColumn();
-                ImGui.Text("replaced language here");
+                ImGui.Text(GetNameFromEnum(entry.Value));
             }
             ImGui.EndTable();
         }
-            // can't ref a property, so use a local copy
-            var configValue = Configuration.SomePropertyToBeSavedAndWithADefault;
-            if (ImGui.Checkbox("Random Config Bool", ref configValue))
-            {
-                Configuration.SomePropertyToBeSavedAndWithADefault = configValue;
-                // can save immediately on change, if you don't want to provide a "Save and Close" button
-                Configuration.Save();
-            }
-
-            var movable = Configuration.IsConfigWindowMovable;
-            if (ImGui.Checkbox("Movable Config Window", ref movable))
-            {
-                Configuration.IsConfigWindowMovable = movable;
-                Configuration.Save();
-            }
 
 
         }
