@@ -11,6 +11,8 @@ using Lumina.Excel.GeneratedSheets2;
 using System.Collections.Generic;
 using System.Linq;
 using Dalamud.Utility;
+using Dalamud.Interface.Utility;
+using Lumina.Excel;
 
 namespace SamplePlugin.Windows;
 
@@ -19,7 +21,8 @@ public class ConfigWindow : Window, IDisposable
     private Configuration Configuration;
     private string map_id_sel = string.Empty;
     private CutsceneMovieVoiceValue language_sel = CutsceneMovieVoiceValue.English;
-    private Random rand = new Random();
+    public string _filter = string.Empty;
+    public ExcelSheet<Maps> mappies = Plugin.DataManager.GetExcelSheet<Maps>();
     // We give this window a constant ID using ###
     // This allows for labels being dynamic, like "{FPS Counter}fps###XYZ counter window",
     // and the window ID will always be "###XYZ counter window" for ImGui
@@ -51,9 +54,17 @@ public class ConfigWindow : Window, IDisposable
         }
     }
 
+    private void DrawSelectableInternal(Maps map)
+    {
+        using var id = ImRaii.PushId(map.Id);
+        var name = map.PlaceName.Value.Name.ToString();
+        if(ImGui.Selectable(name, false))
+        {
+            Plugin.Logger.Debug("Selected map:{0}",map.PlaceName.Value.Name.ToString());
+        }
+    }
     public override void Draw()
     {
-        var mappies = Plugin.DataManager.GetExcelSheet<Maps>();
         if (ImGui.BeginCombo("Default Language", GetNameFromEnum(Configuration.defaultLanguage)))
         {
             foreach (CutsceneMovieVoiceValue csVoice in Enum.GetValues(typeof(CutsceneMovieVoiceValue)))
@@ -69,8 +80,25 @@ public class ConfigWindow : Window, IDisposable
 
         }
         ImGui.Separator();
+        using var combo = ImRaii.Combo("Search locations",Configuration.previewSelectedMapName);
+        Func<Maps, bool> selector = map => map.PlaceName.Value.Name.ToString().Contains(_filter);
+        if (combo)
+        {
+            if (ImGui.InputTextWithHint("##filter", "Filter...", ref _filter, 30))
+            {
+                
+            }
+
+            ImRaii.Child("ChildL");
+            ImGuiClip.FilteredClippedDraw(mappies, 0, selector, DrawSelectableInternal);
+        }
+        /*
         if (ImGui.BeginCombo("Location picker",Configuration.previewSelectedMapName))
         {
+            byte[] searchTerm = [];
+            if(ImGui.InputText("Search locations",searchTerm,30)){
+                Plugin.Logger.Debug("search term:{0}",searchTerm.ToString());
+            }
             foreach (var item in mappies)
             {
                 var resolvedName = item.PlaceNameSub.Value.Name.ToString().IsNullOrEmpty() ? item.PlaceName.Value.Name.ToString() : item.PlaceName.Value.Name.ToString() + "||" + item.PlaceNameSub.Value.Name.ToString();
@@ -82,6 +110,7 @@ public class ConfigWindow : Window, IDisposable
             }
             ImGui.EndCombo();
         }
+        */
         
         if (ImGui.BeginCombo("Language picker", GetNameFromEnum(Configuration.previewSelectedLanguage)))
         {
