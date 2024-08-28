@@ -11,6 +11,8 @@ using Maps = Lumina.Excel.GeneratedSheets.Map;
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using Lumina.Extensions;
+using FFXIVClientStructs.FFXIV.Client.Game.Event;
 
 namespace SamplePlugin;
 
@@ -63,7 +65,6 @@ public sealed class Plugin : IDalamudPlugin
         MainWindow = new MainWindow(this, goatImagePath);
         WindowSystem.AddWindow(ConfigWindow);
         WindowSystem.AddWindow(MainWindow);
-        
         
         CommandManager.AddHandler("/checkcurrvoice", new CommandInfo(OnCommand)
         {
@@ -140,9 +141,20 @@ public sealed class Plugin : IDalamudPlugin
             }
         }else if(command == "/getsheets") {
             var allMaps = DataManager.GetExcelSheet<Maps>();
-            foreach (Map m in allMaps ) {
-                Logger.Debug(m.PlaceNameSub.Value.Name.ToString());
-            }
+            var allDuties = DataManager.GetExcelSheet<TerritoryType>();
+            var allContent = DataManager.GetExcelSheet<ContentFinderCondition>();
+            //ContentFinderCondition.Content = content id
+            /*foreach(ContentFinderCondition cfc in allContent)
+            {
+                if (cfc.Name != null && cfc.Name != "")
+                {
+                    Logger.Debug(cfc.Name + "" + cfc.Content);
+                }
+            }*/
+
+            Logger.Debug(EventFramework.GetCurrentContentId().ToString());
+            Logger.Debug(allContent.First(c => c.Content == EventFramework.GetCurrentContentId()).Name.ToString());
+            
 
         }
         

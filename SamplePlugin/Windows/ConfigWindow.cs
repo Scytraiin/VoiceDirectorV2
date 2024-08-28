@@ -4,6 +4,7 @@ using Dalamud.Interface.Windowing;
 using ImGuiNET;
 using Dalamud.Interface.Utility.Raii;
 using Maps = Lumina.Excel.GeneratedSheets.Map;
+using ContentFinderCondition = Lumina.Excel.GeneratedSheets.ContentFinderCondition;
 using Dalamud.IoC;
 using Dalamud.Plugin.Services;
 using Lumina.Excel.GeneratedSheets;
@@ -13,6 +14,7 @@ using System.Linq;
 using Dalamud.Utility;
 using Dalamud.Interface.Utility;
 using Lumina.Excel;
+using FFXIVClientStructs.FFXIV.Client.Game;
 
 namespace SamplePlugin.Windows;
 
@@ -22,7 +24,9 @@ public class ConfigWindow : Window, IDisposable
     private string map_id_sel = string.Empty;
     private CutsceneMovieVoiceValue language_sel = CutsceneMovieVoiceValue.English;
     public string _filter = string.Empty;
+    public ContentFinderCondition _selected;
     public ExcelSheet<Maps> mappies = Plugin.DataManager.GetExcelSheet<Maps>();
+    public ExcelSheet<ContentFinderCondition> contents = Plugin.DataManager.GetExcelSheet<ContentFinderCondition>();
     // We give this window a constant ID using ###
     // This allows for labels being dynamic, like "{FPS Counter}fps###XYZ counter window",
     // and the window ID will always be "###XYZ counter window" for ImGui
@@ -62,6 +66,7 @@ public class ConfigWindow : Window, IDisposable
         {
             Plugin.Logger.Debug("Selected map:{0}",map.PlaceName.Value.Name.ToString());
         }
+        
     }
     public override void Draw()
     {
@@ -80,7 +85,33 @@ public class ConfigWindow : Window, IDisposable
 
         }
         ImGui.Separator();
-        using var combo = ImRaii.Combo("Search locations",Configuration.previewSelectedMapName);
+        //Based on the plugin filter combo in the dalamud console
+        //https://github.com/goatcorp/Dalamud/blob/master/Dalamud/Interface/Internal/Windows/ConsoleWindow.cs#L705
+        if (ImGui.BeginCombo("##ContentSearch","Random duty", ImGuiComboFlags.HeightLarge))
+        {
+            var sourceNames = contents.Where(c => c.Name != null && c.Name != "")//remove empty or null entries
+                              .Where(c => c.Name.ToString().Contains(_filter))
+                              .ToList();
+            ImGui.PushItemWidth(ImGui.GetContentRegionAvail().X);
+            ImGui.InputTextWithHint("##ContentSearchFilter", "Search duties...", ref _filter, 300);
+            ImGui.Separator();
+
+            if (!sourceNames.Any())
+            {
+                ImGui.Text("No matches found");
+            }
+
+            foreach (ContentFinderCondition selectable in sourceNames)
+            {
+                if (ImGui.Selectable(selectable.Name.ToString(),selectable == _selected))
+                    {
+                    _selected = selectable;
+
+                }
+            }
+            ImGui.EndCombo();
+        }
+        /*using var combo = ImRaii.Combo("Search locations",Configuration.previewSelectedMapName);
         Func<Maps, bool> selector = map => map.PlaceName.Value.Name.ToString().Contains(_filter);
         if (combo)
         {
