@@ -54,7 +54,7 @@ public sealed class Plugin : IDalamudPlugin
 
     //hashmap of mapids as keys and cutsceneMovieVoice enums as values
     //sounds the most straightforward,then serialiaze for persitence/sharing?
-    Dictionary<string, CutsceneMovieVoiceValue> replacements;
+    Dictionary<ushort, CutsceneMovieVoiceValue> replacements;
     public Plugin()
     {
         Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();

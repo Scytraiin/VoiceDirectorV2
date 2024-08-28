@@ -18,7 +18,7 @@ public class Configuration : IPluginConfiguration
     public string previewSelectedMapName { get; set; } = "Location";
     public CutsceneMovieVoiceValue previewSelectedLanguage { get; set; } = CutsceneMovieVoiceValue.English;
 
-    public Dictionary<string, CutsceneMovieVoiceValue> replacements = new Dictionary<string, CutsceneMovieVoiceValue>();
+    public Dictionary<ushort, CutsceneMovieVoiceValue> replacements = new Dictionary<ushort, CutsceneMovieVoiceValue>();
 
     // the below exist just to make saving less cumbersome
     public void Save()

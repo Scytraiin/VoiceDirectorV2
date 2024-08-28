@@ -57,17 +57,6 @@ public class ConfigWindow : Window, IDisposable
             default:return "How did you do that";break;
         }
     }
-
-    private void DrawSelectableInternal(Maps map)
-    {
-        using var id = ImRaii.PushId(map.Id);
-        var name = map.PlaceName.Value.Name.ToString();
-        if(ImGui.Selectable(name, false))
-        {
-            Plugin.Logger.Debug("Selected map:{0}",map.PlaceName.Value.Name.ToString());
-        }
-        
-    }
     public override void Draw()
     {
         if (ImGui.BeginCombo("Default Language", GetNameFromEnum(Configuration.defaultLanguage)))
@@ -87,7 +76,7 @@ public class ConfigWindow : Window, IDisposable
         ImGui.Separator();
         //Based on the plugin filter combo in the dalamud console
         //https://github.com/goatcorp/Dalamud/blob/master/Dalamud/Interface/Internal/Windows/ConsoleWindow.cs#L705
-        if (ImGui.BeginCombo("##ContentSearch","Random duty", ImGuiComboFlags.HeightLarge))
+        if (ImGui.BeginCombo("##ContentSearch","Duty", ImGuiComboFlags.HeightLarge))
         {
             var sourceNames = contents.Where(c => c.Name != null && c.Name != "")//remove empty or null entries
                               .Where(c => c.Name.ToString().Contains(_filter))
@@ -111,19 +100,6 @@ public class ConfigWindow : Window, IDisposable
             }
             ImGui.EndCombo();
         }
-        /*using var combo = ImRaii.Combo("Search locations",Configuration.previewSelectedMapName);
-        Func<Maps, bool> selector = map => map.PlaceName.Value.Name.ToString().Contains(_filter);
-        if (combo)
-        {
-            if (ImGui.InputTextWithHint("##filter", "Filter...", ref _filter, 30))
-            {
-                
-            }
-
-            ImRaii.Child("ChildL");
-            ImGuiClip.FilteredClippedDraw(mappies, 0, selector, DrawSelectableInternal);
-        }
-        /*
         if (ImGui.BeginCombo("Location picker",Configuration.previewSelectedMapName))
         {
             byte[] searchTerm = [];
@@ -141,7 +117,7 @@ public class ConfigWindow : Window, IDisposable
             }
             ImGui.EndCombo();
         }
-        */
+        
         
         if (ImGui.BeginCombo("Language picker", GetNameFromEnum(Configuration.previewSelectedLanguage)))
         {
@@ -158,8 +134,8 @@ public class ConfigWindow : Window, IDisposable
         }
         if (ImGui.Button("Add changes"))
         {
-            Dictionary<string, CutsceneMovieVoiceValue> rep = Configuration.replacements;
-            rep.Add(map_id_sel,language_sel);
+            Dictionary<ushort, CutsceneMovieVoiceValue> rep = Configuration.replacements;
+            rep.Add(_selected.Content,language_sel);
             Configuration.replacements = rep;
             Configuration.Save();
             Plugin.Logger.Debug("Added replacement for map id:{0} with language {1}", [map_id_sel,language_sel]);
@@ -172,7 +148,7 @@ public class ConfigWindow : Window, IDisposable
             ImGui.Text("Maps");
             ImGui.TableNextColumn();
             ImGui.Text("Voice");
-            foreach (KeyValuePair<string,CutsceneMovieVoiceValue> entry in Configuration.replacements)
+            foreach (KeyValuePair<ushort,CutsceneMovieVoiceValue> entry in Configuration.replacements)
             {
                 ImGui.TableNextColumn();
                 var item = mappies.Where(x => x.Id == entry.Key).First();
