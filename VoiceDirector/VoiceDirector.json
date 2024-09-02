@@ -2,7 +2,7 @@
     "Author": "Noevain",
     "Name": "Voice Director",
     "Punchline": "Changes your VO language on a per-duty basis",
-    "Description": "Changes your VO language by specifying a language and an instance, your language will revert to the default when you exit",
+    "Description": "Changes your VO language by specifying a language and an instance, your language will revert to the default when you exit. Icon designed by Leremy from Flaticon",
     "ApplicableVersion": "any",
     "Tags": [
         "plugin",
