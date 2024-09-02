@@ -21,16 +21,16 @@ namespace SamplePlugin.Windows;
 public class ConfigWindow : Window, IDisposable
 {
     private Configuration Configuration;
-    private string map_id_sel = string.Empty;
     private CutsceneMovieVoiceValue language_sel = CutsceneMovieVoiceValue.English;
     public string _filter = string.Empty;
     public ContentFinderCondition _selected;
     public ExcelSheet<Maps> mappies = Plugin.DataManager.GetExcelSheet<Maps>();
     public ExcelSheet<ContentFinderCondition> contents = Plugin.DataManager.GetExcelSheet<ContentFinderCondition>();
+    public bool _error;
     // We give this window a constant ID using ###
     // This allows for labels being dynamic, like "{FPS Counter}fps###XYZ counter window",
     // and the window ID will always be "###XYZ counter window" for ImGui
-    public ConfigWindow(Plugin plugin) : base("A Wonderful Configuration Window###With a constant ID")
+    public ConfigWindow(Plugin plugin) : base("Voice Director Config###VoiceDirectorConfig")
     {
        
 
@@ -76,7 +76,8 @@ public class ConfigWindow : Window, IDisposable
         ImGui.Separator();
         //Based on the plugin filter combo in the dalamud console
         //https://github.com/goatcorp/Dalamud/blob/master/Dalamud/Interface/Internal/Windows/ConsoleWindow.cs#L705
-        if (ImGui.BeginCombo("##ContentSearch","Duty", ImGuiComboFlags.HeightLarge))
+        string resolvedName = _selected != null ? _selected.Name.ToString() : "Duty name";
+        if (ImGui.BeginCombo("Duty Picker",resolvedName, ImGuiComboFlags.HeightLarge))
         {
             var sourceNames = contents.Where(c => c.Name != null && c.Name != "")//remove empty or null entries
                               .Where(c => c.Name.ToString().Contains(_filter))
@@ -100,33 +101,15 @@ public class ConfigWindow : Window, IDisposable
             }
             ImGui.EndCombo();
         }
-        if (ImGui.BeginCombo("Location picker",Configuration.previewSelectedMapName))
-        {
-            byte[] searchTerm = [];
-            if(ImGui.InputText("Search locations",searchTerm,30)){
-                Plugin.Logger.Debug("search term:{0}",searchTerm.ToString());
-            }
-            foreach (var item in mappies)
-            {
-                var resolvedName = item.PlaceNameSub.Value.Name.ToString().IsNullOrEmpty() ? item.PlaceName.Value.Name.ToString() : item.PlaceName.Value.Name.ToString() + "||" + item.PlaceNameSub.Value.Name.ToString();
-                if (ImGui.Selectable(resolvedName, item.Id == map_id_sel)){
-                    Plugin.Logger.Debug("selected:" + item.PlaceName.Value.Name.ToString());
-                    map_id_sel = item.Id;
-                    Configuration.previewSelectedMapName = item.PlaceName.Value.Name.ToString() + "||" + item.PlaceNameSub.Value.Name.ToString();
-                }
-            }
-            ImGui.EndCombo();
-        }
         
         
-        if (ImGui.BeginCombo("Language picker", GetNameFromEnum(Configuration.previewSelectedLanguage)))
+        if (ImGui.BeginCombo("Language picker", GetNameFromEnum(language_sel)))
         {
             foreach (CutsceneMovieVoiceValue csVoice in Enum.GetValues(typeof(CutsceneMovieVoiceValue)))
             {
-                    if (ImGui.Selectable(GetNameFromEnum(csVoice), csVoice == Configuration.previewSelectedLanguage))
+                if (ImGui.Selectable(GetNameFromEnum(csVoice), csVoice == language_sel))
                     {
                         Plugin.Logger.Debug("selected:" + GetNameFromEnum(csVoice));
-                        Configuration.previewSelectedLanguage = csVoice;
                     language_sel = csVoice;
                     }
             }
@@ -134,11 +117,24 @@ public class ConfigWindow : Window, IDisposable
         }
         if (ImGui.Button("Add changes"))
         {
-            Dictionary<ushort, CutsceneMovieVoiceValue> rep = Configuration.replacements;
-            rep.Add(_selected.Content,language_sel);
-            Configuration.replacements = rep;
-            Configuration.Save();
-            Plugin.Logger.Debug("Added replacement for map id:{0} with language {1}", [map_id_sel,language_sel]);
+            try
+            {
+                Dictionary<ushort, CutsceneMovieVoiceValue> rep = Configuration.replacements;
+                rep.Add(_selected.Content, language_sel);
+                Configuration.replacements = rep;
+                Configuration.Save();
+                Plugin.Logger.Debug("Added replacement for content id:{0} with language {1}", [_selected.Content, language_sel]);
+                _error = false;
+            }
+            catch (ArgumentException e)
+            {
+                _error = true;
+                Plugin.Logger.Debug("Tried to add replacement for content id:{0} but a key already exist", _selected);
+            }
+        }
+        if (_error)
+        {
+            ImGui.Text("Could not add your change because a change for this duty already exist,delete the existing one");
         }
         ImGui.Separator();
         ImGui.Text("List of current changes");
@@ -151,19 +147,19 @@ public class ConfigWindow : Window, IDisposable
             foreach (KeyValuePair<ushort,CutsceneMovieVoiceValue> entry in Configuration.replacements)
             {
                 ImGui.TableNextColumn();
-                var item = mappies.Where(x => x.Id == entry.Key).First();
-                ImGui.Text(item.PlaceName.Value.Name.ToString() + "||" + item.PlaceNameSub.Value.Name.ToString());
+                var item = contents.Where(x => x.Content == entry.Key).First();
+                ImGui.Text(item.Name.ToString());
                 ImGui.TableNextColumn();
                 ImGui.Text(GetNameFromEnum(entry.Value));
                 ImGui.SameLine();
                 ImGui.PushID(entry.Key);
                 if (ImGui.SmallButton("Remove"))
                 {
-                    Dictionary<string, CutsceneMovieVoiceValue> rep = Configuration.replacements;
+                    Dictionary<ushort, CutsceneMovieVoiceValue> rep = Configuration.replacements;
                     rep.Remove(entry.Key);
                     Configuration.replacements = rep;
                     Configuration.Save();
-                    Plugin.Logger.Debug("Removed replacement for map id:{0} with language {1}", [item.Id, entry.Value]);
+                    Plugin.Logger.Debug("Removed replacement for map id:{0} with language {1}", [item.Content, entry.Value]);
                 }
                 ImGui.PopID();
             }

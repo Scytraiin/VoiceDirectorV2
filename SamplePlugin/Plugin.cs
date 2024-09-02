@@ -60,23 +60,14 @@ public sealed class Plugin : IDalamudPlugin
         Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
 
         // you might normally want to embed resources and load them from the manifest stream
-        var goatImagePath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "goat.png");
         ConfigWindow = new ConfigWindow(this);
-        MainWindow = new MainWindow(this, goatImagePath);
+        MainWindow = new MainWindow(this);
         WindowSystem.AddWindow(ConfigWindow);
         WindowSystem.AddWindow(MainWindow);
         
-        CommandManager.AddHandler("/checkcurrvoice", new CommandInfo(OnCommand)
+        CommandManager.AddHandler("/vodir", new CommandInfo(OnCommand)
         {
-            HelpMessage = "Check what value is Cutscene Audio right now"
-        });
-        CommandManager.AddHandler("/checkcurrlocation", new CommandInfo(OnCommand)
-        {
-            HelpMessage = "Check where the player is right now"
-        });
-        CommandManager.AddHandler("/getsheets", new CommandInfo(OnCommand)
-        {
-            HelpMessage = "Blabla"
+            HelpMessage = "Open the config window for Voice director"
         });
 
         PluginInterface.UiBuilder.Draw += DrawUI;
@@ -99,109 +90,43 @@ public sealed class Plugin : IDalamudPlugin
         ConfigWindow.Dispose();
         MainWindow.Dispose();
         clientState.TerritoryChanged -= OnZoneChange;
-        CommandManager.RemoveHandler("/checkcurrvoice");
-        CommandManager.RemoveHandler("/checkcurrlocation");
-        CommandManager.RemoveHandler("/getsheets");
+        CommandManager.RemoveHandler("/vodir");
     }
 
     private void OnCommand(string command, string args)
     {
 
-        if (command == "/checkcurrvoice")
+        if (command == "/vodir")
         {
             try
             {
-                uint csMovieVoice = 0;
-                GameConfig.System.TryGetUInt("CutsceneMovieVoice", out csMovieVoice);
-                Logger.Debug("Current voice value:{0}", csMovieVoice);
+                ConfigWindow.Toggle();
             }
             catch (Exception e)
             {
                 Logger.Error(e.ToString());
             }
 
-        }else if (command == "/checkcurrlocation"){
-            string currId = clientState.MapId.ToString();
-            
-            var currMap = DataManager.GetExcelSheet<Maps>()!.GetRow(clientState.MapId);
-            if (currMap != null)
-            {
-                try
-                {
-                    Logger.Debug("Current map id:{0}", currMap.Id.RawString);
-                    Logger.Debug("Current map name:{0}", currMap.PlaceName.Value.Name.ToString());
-                } catch (Exception e)
-                {
-                    Logger.Error("Tried to get name or id of map but got exception:{0}",e.ToString());
-                }
-            }
-            else
-            {
-                Logger.Debug("could not find mapId in database,id searched:{0}", currId);
-            }
-        }else if(command == "/getsheets") {
-            var allMaps = DataManager.GetExcelSheet<Maps>();
-            var allDuties = DataManager.GetExcelSheet<TerritoryType>();
-            var allContent = DataManager.GetExcelSheet<ContentFinderCondition>();
-            //ContentFinderCondition.Content = content id
-            /*foreach(ContentFinderCondition cfc in allContent)
-            {
-                if (cfc.Name != null && cfc.Name != "")
-                {
-                    Logger.Debug(cfc.Name + "" + cfc.Content);
-                }
-            }*/
-
-            Logger.Debug(EventFramework.GetCurrentContentId().ToString());
-            Logger.Debug(allContent.First(c => c.Content == EventFramework.GetCurrentContentId()).Name.ToString());
-            
-
-        }
-        
+        }     
     }
 
-    private void OnZoneChange(ushort e)
+    private void OnZoneChange(ushort e)//e is territoryType
     {
-        var currMap = DataManager.GetExcelSheet<Maps>()!.GetRow(clientState.MapId);
-        if (replacements.ContainsKey(currMap.Id))
+        //GetCurrentContentId does not get updated in time to get so have to find it in the sheets
+        var currContent = DataManager.GetExcelSheet<ContentFinderCondition>()!.Where(c => c.TerritoryType.Value.ContentFinderCondition.Value.Content == e).First();
+        if (replacements.ContainsKey(currContent.Content))
         {
-            Logger.Debug("Attempting config change cutscene voice to {0}, true value:{1}, for map id:{2}", [ConfigWindow.GetNameFromEnum(replacements[currMap.Id]), (ushort)replacements[currMap.Id],currMap.Id]);
-            GameConfig.System.Set("CutsceneMovieVoice", ((ushort)replacements[currMap.Id]));
+            Logger.Debug("Attempting config change cutscene voice to {0}, true value:{1}, for content id:{2}", [ConfigWindow.GetNameFromEnum(replacements[currContent.Content]), replacements[currContent.Content], currContent.Content]);
+            GameConfig.System.Set("CutsceneMovieVoice", ((ushort)replacements[currContent.Content]));
         }
         else if (GameConfig.System.GetUInt("CutsceneMovieVoice") != ((ushort)Configuration.defaultLanguage))
         {
-            Logger.Debug("No changes found for map and language does not match default so set it back to default");
+            Logger.Debug("No changes found for content and language does not match default so set it back to default");
             GameConfig.System.Set("CutsceneMovieVoice",(ushort)Configuration.defaultLanguage);
         }else
         {
             Logger.Debug("No changes found but language already match default,no config changes necessary");
         }
-        /*
-        Logger.Debug("Zone changed");
-
-        var currMap = DataManager.GetExcelSheet<Maps>()!.GetRow(clientState.MapId);
-        if (currMap != null && currMap.Id == "d2fa/00")
-        {
-            try
-            {
-                Logger.Debug("Current map id:{0}", currMap.Id.RawString);
-                Logger.Debug("Current map name:{0}", currMap.PlaceName.Value.Name.ToString());
-                Logger.Debug("Map is Thok ast Thok yay");
-                Logger.Debug("Attempting config change,cutscene voice to EN");
-                GameConfig.System.Set("CutsceneMovieVoice", 1);
-            }
-            catch (Exception ee)
-            {
-                Logger.Error("Tried to change config but exception:{0}", ee.ToString());
-            }
-        }
-        else
-        {
-            Logger.Debug("Map is not Thok ast Thok,revert to JP");
-            GameConfig.System.Set("CutsceneMovieVoice", 0);
-        }
-
-        */
     }
 
     private void DrawUI() => WindowSystem.Draw();

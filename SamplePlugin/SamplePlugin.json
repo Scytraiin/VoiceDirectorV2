@@ -1,12 +1,11 @@
 {
-  "Author": "your name here",
-  "Name": "Sample Plugin",
-  "Punchline": "A short one-liner that shows up in /xlplugins.",
-  "Description": "A description that shows up in /xlplugins. List any major slash-command(s).",
-  "ApplicableVersion": "any",
-  "Tags": [
-    "sample",
-    "plugin",
-    "goats"
-  ]
+    "Author": "Noevain",
+    "Name": "Voice Director",
+    "Punchline": "Changes your VO language on a per-duty basis",
+    "Description": "Changes your VO language by specifying a language and an instance, your language will revert to the default when you exit",
+    "ApplicableVersion": "any",
+    "Tags": [
+        "plugin",
+        "audio"
+    ]
 }

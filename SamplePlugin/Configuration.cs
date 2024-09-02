@@ -15,9 +15,6 @@ public class Configuration : IPluginConfiguration
 
     public CutsceneMovieVoiceValue defaultLanguage { get; set; } = CutsceneMovieVoiceValue.English;
 
-    public string previewSelectedMapName { get; set; } = "Location";
-    public CutsceneMovieVoiceValue previewSelectedLanguage { get; set; } = CutsceneMovieVoiceValue.English;
-
     public Dictionary<ushort, CutsceneMovieVoiceValue> replacements = new Dictionary<ushort, CutsceneMovieVoiceValue>();
 
     // the below exist just to make saving less cumbersome
