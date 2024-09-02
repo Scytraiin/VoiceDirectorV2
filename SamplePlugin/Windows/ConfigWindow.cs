@@ -16,7 +16,7 @@ using Dalamud.Interface.Utility;
 using Lumina.Excel;
 using FFXIVClientStructs.FFXIV.Client.Game;
 
-namespace SamplePlugin.Windows;
+namespace VoiceDirector.Windows;
 
 public class ConfigWindow : Window, IDisposable
 {

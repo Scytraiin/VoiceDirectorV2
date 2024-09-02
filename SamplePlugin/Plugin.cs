@@ -4,7 +4,7 @@ using Dalamud.Plugin;
 using System.IO;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
-using SamplePlugin.Windows;
+using VoiceDirector.Windows;
 using Dalamud.Game.Config;
 using Lumina.Excel.GeneratedSheets;
 using Maps = Lumina.Excel.GeneratedSheets.Map;
@@ -14,7 +14,7 @@ using System.Collections.Generic;
 using Lumina.Extensions;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
 
-namespace SamplePlugin;
+namespace VoiceDirector;
 
 //leaving this somewhere for now
 //CutsceneMovieVoice possible values
