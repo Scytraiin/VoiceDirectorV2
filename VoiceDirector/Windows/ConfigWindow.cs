@@ -24,7 +24,6 @@ public class ConfigWindow : Window, IDisposable
     private CutsceneMovieVoiceValue language_sel = CutsceneMovieVoiceValue.English;
     public string _filter = string.Empty;
     public ContentFinderCondition _selected;
-    public ExcelSheet<Maps> mappies = Plugin.DataManager.GetExcelSheet<Maps>();
     public ExcelSheet<ContentFinderCondition> contents = Plugin.DataManager.GetExcelSheet<ContentFinderCondition>();
     public bool _error;
     // We give this window a constant ID using ###
