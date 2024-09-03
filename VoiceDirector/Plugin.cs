@@ -22,7 +22,7 @@ namespace VoiceDirector;
 // 1 = EN
 // 2 = GER
 // 3 = FR
-// 42944967295 = Adjust to client,could just be junk/not set if adjust to client is set
+// 42944967295 = Adjust to client,could just be junk/not set if adjust to client is set,but this seem to be consistent
 public enum CutsceneMovieVoiceValue : ushort
 {
     Japanese = 0,
@@ -113,10 +113,19 @@ public sealed class Plugin : IDalamudPlugin
     private void OnZoneChange(ushort e)//e is territoryType
     {
         //GetCurrentContentId does not get updated in time to get so have to find it in the sheets
-        var currContent = DataManager.GetExcelSheet<ContentFinderCondition>()!.Where(c => c.TerritoryType.Value.ContentFinderCondition.Value.Content == e).First();
+        ContentFinderCondition currContent = null;
+        try
+        {
+            currContent = DataManager.GetExcelSheet<TerritoryType>().Where(x => x.RowId == e).First().ContentFinderCondition.Value;
+            //currContent = DataManager.GetExcelSheet<ContentFinderCondition>().Where(c => c.TerritoryType.Value.ContentFinderCondition.Value.Content == e).First();
+
+        } catch(Exception ee)
+        {
+            Logger.Error(ee.ToString());
+        }
         if (replacements.ContainsKey(currContent.Content))
         {
-            Logger.Debug("Attempting config change cutscene voice to {0}, true value:{1}, for content id:{2}", [ConfigWindow.GetNameFromEnum(replacements[currContent.Content]), replacements[currContent.Content], currContent.Content]);
+            Logger.Debug("Attempting config change cutscene voice to {0}, true value:{1}, for content id:{2}", [ConfigWindow.GetNameFromEnum(replacements[currContent.Content]), (ushort)replacements[currContent.Content], currContent.Content]);
             GameConfig.System.Set("CutsceneMovieVoice", ((ushort)replacements[currContent.Content]));
         }
         else if (GameConfig.System.GetUInt("CutsceneMovieVoice") != ((ushort)Configuration.defaultLanguage))
