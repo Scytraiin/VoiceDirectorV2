@@ -121,6 +121,7 @@ public sealed class Plugin : IDalamudPlugin
 
         } catch(Exception ee)
         {
+            Logger.Error("Could not find a matching TerritoryType");
             Logger.Error(ee.ToString());
         }
         if (replacements.ContainsKey(currContent.Content))
