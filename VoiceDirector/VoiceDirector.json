@@ -5,7 +5,7 @@
     "Description": "Changes your VO language by specifying a language and an instance, your language will revert to the default when you exit. Icon designed by Leremy from Flaticon",
     "ApplicableVersion": "any",
     "IconUrl": "https://raw.githubusercontent.com/noevain/VoiceDirector/master/images/icon.png",
-    "ImageUrl": [
+    "ImageUrls": [
         "https://raw.githubusercontent.com/noevain/VoiceDirector/master/images/preview1.png"
     ],
     "Tags": [
