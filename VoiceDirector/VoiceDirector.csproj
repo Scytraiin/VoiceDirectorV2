@@ -10,16 +10,4 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
-    <ItemGroup>
-        <Reference Include="FFXIVClientStructs">
-            <HintPath>$(AppData)\XIVLauncher\addon\Hooks\dev\FFXIVClientStructs.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
-    </ItemGroup>
-    
-
-  <ItemGroup>
-    <PackageReference Include="Lumina" Version="4.1.2" />
-    <PackageReference Include="Lumina.Excel" Version="7.0.1" />
-  </ItemGroup>
 </Project>
