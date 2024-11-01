@@ -79,7 +79,7 @@ public class ConfigWindow : Window, IDisposable
         if (ImGui.BeginCombo("Duty Picker",resolvedName, ImGuiComboFlags.HeightLarge))
         {
             var sourceNames = contents.Where(c => c.Name != null && c.Name != "")//remove empty or null entries
-                              .Where(c => c.Name.ToString().Contains(_filter))
+                              .Where(c => c.Name.ToString().IndexOf(_filter,StringComparison.OrdinalIgnoreCase) != -1)
                               .ToList();
             ImGui.PushItemWidth(ImGui.GetContentRegionAvail().X);
             ImGui.InputTextWithHint("##ContentSearchFilter", "Search duties...", ref _filter, 300);
