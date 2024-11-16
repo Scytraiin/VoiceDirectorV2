@@ -3,12 +3,10 @@ using System.Numerics;
 using Dalamud.Interface.Windowing;
 using ImGuiNET;
 using Dalamud.Interface.Utility.Raii;
-using Maps = Lumina.Excel.GeneratedSheets.Map;
-using ContentFinderCondition = Lumina.Excel.GeneratedSheets.ContentFinderCondition;
+using Maps = Lumina.Excel.Sheets.Map;
+using ContentFinderCondition = Lumina.Excel.Sheets.ContentFinderCondition;
 using Dalamud.IoC;
 using Dalamud.Plugin.Services;
-using Lumina.Excel.GeneratedSheets;
-using Lumina.Excel.GeneratedSheets2;
 using System.Collections.Generic;
 using System.Linq;
 using Dalamud.Utility;
@@ -49,11 +47,11 @@ public class ConfigWindow : Window, IDisposable
     {
         switch (csValue)
         {
-            case CutsceneMovieVoiceValue.Japanese:return "Japanese";break;
-            case CutsceneMovieVoiceValue.English:return "English";break;
-            case CutsceneMovieVoiceValue.German:return "German";break;
-            case CutsceneMovieVoiceValue.French:return "French";break;
-            default:return "How did you do that";break;
+            case CutsceneMovieVoiceValue.Japanese:return "Japanese";
+            case CutsceneMovieVoiceValue.English:return "English";
+            case CutsceneMovieVoiceValue.German:return "German";
+            case CutsceneMovieVoiceValue.French:return "French";
+            default:return "How did you do that";
         }
     }
     public override void Draw()
@@ -75,10 +73,10 @@ public class ConfigWindow : Window, IDisposable
         ImGui.Separator();
         //Based on the plugin filter combo in the dalamud console
         //https://github.com/goatcorp/Dalamud/blob/master/Dalamud/Interface/Internal/Windows/ConsoleWindow.cs#L705
-        string resolvedName = _selected != null ? _selected.Name.ToString() : "Duty name";
+        string resolvedName = _selected.RowId != 0 ? _selected.Name.ToString() : "Duty name";
         if (ImGui.BeginCombo("Duty Picker",resolvedName, ImGuiComboFlags.HeightLarge))
         {
-            var sourceNames = contents.Where(c => c.Name != null && c.Name != "")//remove empty or null entries
+            var sourceNames = contents.Where(c => c.Name != "")//remove empty or null entries
                               .Where(c => c.Name.ToString().IndexOf(_filter,StringComparison.OrdinalIgnoreCase) != -1)
                               .ToList();
             ImGui.PushItemWidth(ImGui.GetContentRegionAvail().X);
@@ -92,7 +90,7 @@ public class ConfigWindow : Window, IDisposable
 
             foreach (ContentFinderCondition selectable in sourceNames)
             {
-                if (ImGui.Selectable(selectable.Name.ToString(),selectable == _selected))
+                if (ImGui.Selectable(selectable.Name.ToString(),selectable.RowId == _selected.RowId))
                     {
                     _selected = selectable;
 
@@ -119,16 +117,16 @@ public class ConfigWindow : Window, IDisposable
             try
             {
                 Dictionary<ushort, CutsceneMovieVoiceValue> rep = Configuration.replacements;
-                rep.Add(_selected.Content, language_sel);
+                rep.Add((ushort)_selected.Content.RowId, language_sel);
                 Configuration.replacements = rep;
                 Configuration.Save();
-                Plugin.Logger.Debug("Added replacement for content id:{0} with language {1}", [_selected.Content, language_sel]);
+                Plugin.Logger.Debug("Added replacement for content id:{0} with language {1}", [_selected.Content.RowId, language_sel]);
                 _error = false;
             }
             catch (ArgumentException e)
             {
                 _error = true;
-                Plugin.Logger.Debug("Tried to add replacement for content id:{0} but a key already exist", _selected);
+                Plugin.Logger.Debug("Tried to add replacement for content id:{0} but a key already exist:{1}", _selected,e.ToString());
             }
         }
         if (_error)
@@ -146,7 +144,7 @@ public class ConfigWindow : Window, IDisposable
             foreach (KeyValuePair<ushort,CutsceneMovieVoiceValue> entry in Configuration.replacements)
             {
                 ImGui.TableNextColumn();
-                var item = contents.Where(x => x.Content == entry.Key).First();
+                var item = contents.First(x => x.Content.RowId == entry.Key);
                 ImGui.Text(item.Name.ToString());
                 ImGui.TableNextColumn();
                 ImGui.Text(GetNameFromEnum(entry.Value));

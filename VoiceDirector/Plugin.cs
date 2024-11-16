@@ -6,8 +6,8 @@ using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
 using VoiceDirector.Windows;
 using Dalamud.Game.Config;
-using Lumina.Excel.GeneratedSheets;
-using Maps = Lumina.Excel.GeneratedSheets.Map;
+using Lumina.Excel.Sheets;
+using Maps = Lumina.Excel.Sheets.Map;
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -112,21 +112,23 @@ public sealed class Plugin : IDalamudPlugin
     private void OnZoneChange(ushort e)//e is territoryType
     {
         //GetCurrentContentId does not get updated in time to get so have to find it in the sheets
-        ContentFinderCondition currContent = null;
+        uint currContent;
         try
         {
-            currContent = DataManager.GetExcelSheet<TerritoryType>().Where(x => x.RowId == e).First().ContentFinderCondition.Value;
-            //currContent = DataManager.GetExcelSheet<ContentFinderCondition>().Where(c => c.TerritoryType.Value.ContentFinderCondition.Value.Content == e).First();
+            currContent = DataManager.GetExcelSheet<TerritoryType>().First(x => x.RowId == e).ContentFinderCondition.Value.Content.RowId;
 
         } catch(Exception ee)
+        
         {
             Logger.Error("Could not find a matching TerritoryType");
             Logger.Error(ee.ToString());
+            return;
         }
-        if (replacements.ContainsKey(currContent.Content))
+        
+        if (replacements.ContainsKey((ushort)currContent))
         {
-            Logger.Debug("Attempting config change cutscene voice to {0}, true value:{1}, for content id:{2}", [ConfigWindow.GetNameFromEnum(replacements[currContent.Content]), (ushort)replacements[currContent.Content], currContent.Content]);
-            GameConfig.System.Set("CutsceneMovieVoice", ((ushort)replacements[currContent.Content]));
+            Logger.Debug("Attempting config change cutscene voice to {0}, true value:{1}, for content id:{2}", [ConfigWindow.GetNameFromEnum(replacements[(ushort)currContent]), (ushort)replacements[(ushort)currContent], (ushort)currContent]);
+            GameConfig.System.Set("CutsceneMovieVoice", ((ushort)replacements[(ushort)currContent]));
         }
         else if (GameConfig.System.GetUInt("CutsceneMovieVoice") != ((ushort)Configuration.defaultLanguage))
         {
