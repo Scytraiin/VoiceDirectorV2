@@ -3,7 +3,7 @@
   <Import Project="Dalamud.Plugin.Bootstrap.targets" />
 
   <PropertyGroup>
-    <Version>1.1.0.0</Version>
+    <Version>1.2.0.0</Version>
     <Description>A plugin to Changes your VO language on a per-duty basis</Description>
     <PackageProjectUrl>https://github.com/Noevain/VoiceDirector</PackageProjectUrl>
     <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
