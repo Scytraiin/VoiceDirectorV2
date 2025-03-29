@@ -13,6 +13,7 @@ using Dalamud.Utility;
 using Dalamud.Interface.Utility;
 using Lumina.Excel;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using Lumina.Extensions;
 
 namespace VoiceDirector.Windows;
 
@@ -144,8 +145,9 @@ public class ConfigWindow : Window, IDisposable
             foreach (KeyValuePair<ushort,CutsceneMovieVoiceValue> entry in Configuration.replacements)
             {
                 ImGui.TableNextColumn();
-                var item = contents.First(x => x.Content.RowId == entry.Key);
-                ImGui.Text(item.Name.ToString());
+                var itemCFC = contents.FirstOrNull(x => x.Content.RowId == entry.Key);
+                var itemName = itemCFC?.Name.ToString() ?? "This zone is no longer in the game,You can safely delete this";
+                ImGui.Text(itemName);
                 ImGui.TableNextColumn();
                 ImGui.Text(GetNameFromEnum(entry.Value));
                 ImGui.SameLine();
@@ -156,7 +158,8 @@ public class ConfigWindow : Window, IDisposable
                     rep.Remove(entry.Key);
                     Configuration.replacements = rep;
                     Configuration.Save();
-                    Plugin.Logger.Debug("Removed replacement for map id:{0} with language {1}", [item.Content, entry.Value]);
+                    var cfc = itemCFC?.Content.RowId ?? 0;
+                    Plugin.Logger.Debug("Removed replacement for map id:{0} with language {1}", [cfc , entry.Value]);
                 }
                 ImGui.PopID();
             }
