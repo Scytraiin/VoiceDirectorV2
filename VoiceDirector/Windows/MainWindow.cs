@@ -1,36 +1,33 @@
 using System;
 using System.Numerics;
+
 using Dalamud.Bindings.ImGui;
-using Dalamud.Interface.Internal;
-using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
-using Dalamud.Plugin.Services;
 
 namespace VoiceDirector.Windows;
 
-public class MainWindow : Window, IDisposable
+public sealed class MainWindow : Window, IDisposable
 {
-
-    private Plugin Plugin;
-
-    // We give this window a hidden ID using ##
-    // So that the user will see "My Amazing Window" as window title,
-    // but for ImGui the ID is "My Amazing Window##With a hidden ID"
-    public MainWindow(Plugin plugin)
-        : base("Voice Director##With a hidden ID", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
+    public MainWindow()
+        : base("Voice Director##MainWindow", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
     {
-        SizeConstraints = new WindowSizeConstraints
+        this.SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(375, 330),
-            MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
+            MinimumSize = new Vector2(420, 180),
+            MaximumSize = new Vector2(float.MaxValue, float.MaxValue),
         };
-        Plugin = plugin;
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    {
+    }
 
     public override void Draw()
     {
-        ImGui.Text("Use the settings button or type /vodir in chat to configure Voice Director");
+        ImGui.TextWrapped("Voice Director switches the cutscene voice language per duty.");
+        ImGui.Spacing();
+        ImGui.BulletText("Open settings with the gear button or run /vodir config.");
+        ImGui.BulletText("Set a default voice language used whenever no duty override exists.");
+        ImGui.BulletText("Add duty-specific overrides for raids, dungeons, or trials.");
     }
 }

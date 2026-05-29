@@ -1,147 +1,171 @@
-using Dalamud.Game.Command;
-using Dalamud.IoC;
-using Dalamud.Plugin;
-using System.IO;
-using Dalamud.Interface.Windowing;
-using Dalamud.Plugin.Services;
-using VoiceDirector.Windows;
-using Dalamud.Game.Config;
-using Lumina.Excel.Sheets;
-using Maps = Lumina.Excel.Sheets.Map;
 using System;
-using System.Linq;
-using System.Collections.Generic;
-using Lumina.Extensions;
-using FFXIVClientStructs.FFXIV.Client.Game.Event;
+
+using Dalamud.Game.Command;
+using Dalamud.Interface.Windowing;
+using Dalamud.Plugin;
+using Dalamud.Plugin.Services;
+
+using Lumina.Excel.Sheets;
+
+using VoiceDirector.Windows;
 
 namespace VoiceDirector;
 
-//leaving this somewhere for now
-//CutsceneMovieVoice possible values
-// 0 = JP
-// 1 = EN
-// 2 = GER
-// 3 = FR
-// 42944967295 = Adjust to client,could just be junk/not set if adjust to client is set,but this seem to be consistent
-public enum CutsceneMovieVoiceValue : ushort
-{
-    Japanese = 0,
-    English = 1,
-    German = 2,
-    French = 3
-}//Adjust to client being an option seems dumb just ask the user for a prefered default
-
 public sealed class Plugin : IDalamudPlugin
 {
-    [PluginService] internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
-    [PluginService] internal static ICommandManager CommandManager { get; private set; } = null!;
-    [PluginService] internal static IClientState clientState { get; private set; } = null!;
+    private const string CommandName = "/vodir";
+    private const string CutsceneMovieVoiceKey = "CutsceneMovieVoice";
 
-    [PluginService] internal static IDataManager DataManager { get; private set; } = null!;
-    [PluginService] internal static IGameConfig GameConfig {  get; private set; } = null!;
-    [PluginService] internal static IPluginLog Logger { get; private set; } = null!;
-    //Test
-    //map id:d2fa/00
-    //map name: Thok ast Thok
+    private readonly IDalamudPluginInterface pluginInterface;
+    private readonly ICommandManager commandManager;
+    private readonly IClientState clientState;
+    private readonly IDataManager dataManager;
+    private readonly IGameConfig gameConfig;
+    private readonly IPluginLog log;
+    private readonly WindowSystem windowSystem = new("VoiceDirector");
+    private readonly ConfigWindow configWindow;
+    private readonly MainWindow mainWindow;
+    private readonly Configuration configuration;
 
-
-    public Configuration Configuration { get; init; }
-
-    public readonly WindowSystem WindowSystem = new("VoiceDirector");
-    private ConfigWindow ConfigWindow { get; init; }
-    private MainWindow MainWindow { get; init; }
-
-    //hashmap of mapids as keys and cutsceneMovieVoice enums as values
-    //sounds the most straightforward,then serialiaze for persitence/sharing?
-    Dictionary<ushort, CutsceneMovieVoiceValue> replacements;
-    public Plugin()
+    public Plugin(
+        IDalamudPluginInterface pluginInterface,
+        ICommandManager commandManager,
+        IClientState clientState,
+        IDataManager dataManager,
+        IGameConfig gameConfig,
+        IPluginLog log)
     {
-        Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+        this.pluginInterface = pluginInterface;
+        this.commandManager = commandManager;
+        this.clientState = clientState;
+        this.dataManager = dataManager;
+        this.gameConfig = gameConfig;
+        this.log = log;
 
-        // you might normally want to embed resources and load them from the manifest stream
-        ConfigWindow = new ConfigWindow(this);
-        MainWindow = new MainWindow(this);
-        WindowSystem.AddWindow(ConfigWindow);
-        WindowSystem.AddWindow(MainWindow);
-        
-        CommandManager.AddHandler("/vodir", new CommandInfo(OnCommand)
+        this.configuration = this.pluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+        this.configuration.Initialize(this.pluginInterface);
+
+        this.configWindow = new ConfigWindow(this.configuration, this.dataManager, this.log);
+        this.mainWindow = new MainWindow();
+
+        this.windowSystem.AddWindow(this.configWindow);
+        this.windowSystem.AddWindow(this.mainWindow);
+
+        this.commandManager.AddHandler(CommandName, new CommandInfo(this.OnCommand)
         {
-            HelpMessage = "Open the config window for Voice director"
+            HelpMessage = "Open the Voice Director window. Use '/vodir config' for settings.",
         });
 
-        PluginInterface.UiBuilder.Draw += DrawUI;
+        this.pluginInterface.UiBuilder.Draw += this.DrawUi;
+        this.pluginInterface.UiBuilder.OpenMainUi += this.OpenMainUi;
+        this.pluginInterface.UiBuilder.OpenConfigUi += this.OpenConfigUi;
+        this.clientState.TerritoryChanged += this.OnTerritoryChanged;
 
-        // This adds a button to the plugin installer entry of this plugin which allows
-        // to toggle the display status of the configuration ui
-        PluginInterface.UiBuilder.OpenConfigUi += ToggleConfigUI;
-
-        // Adds another button that is doing the same but for the main ui of the plugin
-        PluginInterface.UiBuilder.OpenMainUi += ToggleMainUI;
-
-        clientState.TerritoryChanged += OnZoneChange;
-        replacements = Configuration.replacements;
+        this.log.Information("Voice Director initialized.");
     }
 
     public void Dispose()
     {
-        WindowSystem.RemoveAllWindows();
+        this.clientState.TerritoryChanged -= this.OnTerritoryChanged;
+        this.pluginInterface.UiBuilder.Draw -= this.DrawUi;
+        this.pluginInterface.UiBuilder.OpenMainUi -= this.OpenMainUi;
+        this.pluginInterface.UiBuilder.OpenConfigUi -= this.OpenConfigUi;
 
-        ConfigWindow.Dispose();
-        MainWindow.Dispose();
-        clientState.TerritoryChanged -= OnZoneChange;
-        CommandManager.RemoveHandler("/vodir");
+        this.commandManager.RemoveHandler(CommandName);
+
+        this.windowSystem.RemoveAllWindows();
+        this.configWindow.Dispose();
+        this.mainWindow.Dispose();
     }
 
     private void OnCommand(string command, string args)
     {
-
-        if (command == "/vodir")
+        if (string.Equals(args.Trim(), "config", StringComparison.OrdinalIgnoreCase))
         {
-            try
-            {
-                ConfigWindow.Toggle();
-            }
-            catch (Exception e)
-            {
-                Logger.Error(e.ToString());
-            }
-
-        }     
-    }
-
-    private void OnZoneChange(ushort e)//e is territoryType
-    {
-        //GetCurrentContentId does not get updated in time to get so have to find it in the sheets
-        uint currContent;
-        try
-        {
-            currContent = DataManager.GetExcelSheet<TerritoryType>().First(x => x.RowId == e).ContentFinderCondition.Value.Content.RowId;
-
-        } catch(Exception ee)
-        
-        {
-            Logger.Error("Could not find a matching TerritoryType");
-            Logger.Error(ee.ToString());
+            this.OpenConfigUi();
             return;
         }
-        
-        if (replacements.ContainsKey((ushort)currContent))
+
+        this.OpenMainUi();
+    }
+
+    private void OnTerritoryChanged(uint territoryType)
+    {
+        try
         {
-            Logger.Debug("Attempting config change cutscene voice to {0}, true value:{1}, for content id:{2}", [ConfigWindow.GetNameFromEnum(replacements[(ushort)currContent]), (ushort)replacements[(ushort)currContent], (ushort)currContent]);
-            GameConfig.System.Set("CutsceneMovieVoice", ((ushort)replacements[(ushort)currContent]));
+            this.ApplyConfiguredVoice(this.ResolveContentId(territoryType));
         }
-        else if (GameConfig.System.GetUInt("CutsceneMovieVoice") != ((ushort)Configuration.defaultLanguage))
+        catch (Exception ex)
         {
-            Logger.Debug("No changes found for content and language does not match default so set it back to default");
-            GameConfig.System.Set("CutsceneMovieVoice",(ushort)Configuration.defaultLanguage);
-        }else
-        {
-            Logger.Debug("No changes found but language already match default,no config changes necessary");
+            this.log.Error(ex, "Failed to update cutscene voice for territory change {TerritoryType}.", territoryType);
         }
     }
 
-    private void DrawUI() => WindowSystem.Draw();
+    private ushort? ResolveContentId(uint territoryType)
+    {
+        if (territoryType == 0)
+        {
+            return null;
+        }
 
-    public void ToggleConfigUI() => ConfigWindow.Toggle();
-    public void ToggleMainUI() => MainWindow.Toggle();
+        if (!this.dataManager.GetExcelSheet<TerritoryType>().TryGetRow(territoryType, out var territory))
+        {
+            this.log.Warning("Could not resolve TerritoryType row {TerritoryType}.", territoryType);
+            return null;
+        }
+
+        var contentId = territory.ContentFinderCondition.ValueNullable?.Content.RowId;
+        if (contentId is null or 0 || contentId > ushort.MaxValue)
+        {
+            return null;
+        }
+
+        return (ushort)contentId.Value;
+    }
+
+    private void ApplyConfiguredVoice(ushort? contentId)
+    {
+        var currentVoice = (ushort)this.gameConfig.System.GetUInt(CutsceneMovieVoiceKey);
+        var desiredVoice = VoiceSelectionResolver.ResolveDesiredVoice(
+            this.configuration.replacements,
+            contentId,
+            this.configuration.defaultLanguage,
+            currentVoice);
+
+        if (desiredVoice is null)
+        {
+            return;
+        }
+
+        this.gameConfig.System.Set(CutsceneMovieVoiceKey, (uint)desiredVoice.Value);
+        this.log.Debug(
+            "Set {ConfigKey} to {Voice} for content {ContentId}.",
+            CutsceneMovieVoiceKey,
+            desiredVoice.Value,
+            contentId?.ToString() ?? "default");
+    }
+
+    private void DrawUi()
+    {
+        try
+        {
+            this.windowSystem.Draw();
+        }
+        catch (Exception ex)
+        {
+            this.mainWindow.IsOpen = false;
+            this.configWindow.IsOpen = false;
+            this.log.Error(ex, "Unhandled UI exception in Voice Director. Closed plugin windows to protect the host.");
+        }
+    }
+
+    private void OpenMainUi()
+    {
+        this.mainWindow.IsOpen = true;
+    }
+
+    private void OpenConfigUi()
+    {
+        this.configWindow.IsOpen = true;
+    }
 }

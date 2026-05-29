@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="FFYIV">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/FFYIV/FFXIV-ProximityVoiceChat-master.zip!/" />
+      <root url="jar://$PROJECT_DIR$/FFYIV/Dalamud-master.zip!/" />
+      <root url="jar://$PROJECT_DIR$/FFYIV/14.0.4.1.zip!/" />
+      <root url="jar://$PROJECT_DIR$/FFYIV/15.0.0.2.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

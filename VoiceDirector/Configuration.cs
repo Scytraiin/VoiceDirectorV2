@@ -1,23 +1,29 @@
-using Dalamud.Configuration;
-using Dalamud.Plugin;
 using System;
 using System.Collections.Generic;
+
+using Dalamud.Configuration;
+using Dalamud.Plugin;
 
 namespace VoiceDirector;
 
 [Serializable]
-public class Configuration : IPluginConfiguration
+public sealed class Configuration : IPluginConfiguration
 {
-    public int Version { get; set; } = 1;
+    private IDalamudPluginInterface? pluginInterface;
 
+    public int Version { get; set; } = 1;
 
     public CutsceneMovieVoiceValue defaultLanguage { get; set; } = CutsceneMovieVoiceValue.English;
 
-    public Dictionary<ushort, CutsceneMovieVoiceValue> replacements = new Dictionary<ushort, CutsceneMovieVoiceValue>();
+    public Dictionary<ushort, CutsceneMovieVoiceValue> replacements { get; set; } = [];
 
-    // the below exist just to make saving less cumbersome
+    public void Initialize(IDalamudPluginInterface pluginInterface)
+    {
+        this.pluginInterface = pluginInterface;
+    }
+
     public void Save()
     {
-        Plugin.PluginInterface.SavePluginConfig(this);
+        this.pluginInterface?.SavePluginConfig(this);
     }
 }

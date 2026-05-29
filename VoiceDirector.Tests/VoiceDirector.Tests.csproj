@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="xunit.v3.assert" Version="3.2.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\VoiceDirector\CutsceneMovieVoiceValue.cs" Link="Plugin\CutsceneMovieVoiceValue.cs" />
+    <Compile Include="..\VoiceDirector\VoiceSelectionResolver.cs" Link="Plugin\VoiceSelectionResolver.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\scyt.repo.json" Link="TestData\scyt.repo.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\VoiceDirector\VoiceDirector.json" Link="TestData\VoiceDirector.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

@@ -1,171 +1,288 @@
 using System;
-using System.Numerics;
-using Dalamud.Interface.Windowing;
-using Dalamud.Interface.Utility.Raii;
-using Maps = Lumina.Excel.Sheets.Map;
-using ContentFinderCondition = Lumina.Excel.Sheets.ContentFinderCondition;
-using Dalamud.IoC;
-using Dalamud.Plugin.Services;
 using System.Collections.Generic;
 using System.Linq;
-using Dalamud.Utility;
-using Dalamud.Interface.Utility;
-using Lumina.Excel;
-using FFXIVClientStructs.FFXIV.Client.Game;
-using Lumina.Extensions;
+using System.Numerics;
+
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Windowing;
+using Dalamud.Plugin.Services;
+
+using Lumina.Excel;
+using Lumina.Excel.Sheets;
+
 namespace VoiceDirector.Windows;
 
-public class ConfigWindow : Window, IDisposable
+public sealed class ConfigWindow : Window, IDisposable
 {
-    private Configuration Configuration;
-    private CutsceneMovieVoiceValue language_sel = CutsceneMovieVoiceValue.English;
-    public string _filter = string.Empty;
-    public ContentFinderCondition _selected;
-    public ExcelSheet<ContentFinderCondition> contents = Plugin.DataManager.GetExcelSheet<ContentFinderCondition>();
-    public bool _error;
-    // We give this window a constant ID using ###
-    // This allows for labels being dynamic, like "{FPS Counter}fps###XYZ counter window",
-    // and the window ID will always be "###XYZ counter window" for ImGui
-    public ConfigWindow(Plugin plugin) : base("Voice Director Config###VoiceDirectorConfig")
+    private readonly Configuration configuration;
+    private readonly IPluginLog log;
+    private readonly ExcelSheet<ContentFinderCondition> contents;
+    private readonly IReadOnlyList<ContentFinderCondition> selectableDuties;
+    private readonly IReadOnlyDictionary<ushort, string> dutyNamesByContentId;
+    private CutsceneMovieVoiceValue selectedLanguage = CutsceneMovieVoiceValue.English;
+    private string filter = string.Empty;
+    private uint selectedContentFinderConditionId;
+    private string? statusMessage;
+    private bool statusIsError;
+
+    public ConfigWindow(Configuration configuration, IDataManager dataManager, IPluginLog log)
+        : base("Voice Director Config###VoiceDirectorConfig")
     {
-       
+        this.configuration = configuration;
+        this.log = log;
+        this.contents = dataManager.GetExcelSheet<ContentFinderCondition>();
+        this.selectableDuties = this.contents
+            .Where(content => content.Content.RowId > 0)
+            .Where(content => !string.IsNullOrWhiteSpace(content.Name.ToString()))
+            .OrderBy(content => content.Name.ToString(), StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        this.dutyNamesByContentId = BuildDutyNameMap(this.selectableDuties);
 
-        
-
-        Configuration = plugin.Configuration;
-    }
-
-    public void Dispose() { }
-
-    public override void PreDraw()
-    {
-
-    }
-
-    public static string GetNameFromEnum(CutsceneMovieVoiceValue csValue)
-    {
-        switch (csValue)
+        this.SizeConstraints = new WindowSizeConstraints
         {
-            case CutsceneMovieVoiceValue.Japanese:return "Japanese";
-            case CutsceneMovieVoiceValue.English:return "English";
-            case CutsceneMovieVoiceValue.German:return "German";
-            case CutsceneMovieVoiceValue.French:return "French";
-            default:return "How did you do that";
-        }
+            MinimumSize = new Vector2(520, 420),
+            MaximumSize = new Vector2(float.MaxValue, float.MaxValue),
+        };
     }
+
+    public void Dispose()
+    {
+    }
+
+    public static string GetNameFromEnum(CutsceneMovieVoiceValue value) =>
+        value switch
+        {
+            CutsceneMovieVoiceValue.Japanese => "Japanese",
+            CutsceneMovieVoiceValue.English => "English",
+            CutsceneMovieVoiceValue.German => "German",
+            CutsceneMovieVoiceValue.French => "French",
+            _ => $"Unknown ({(ushort)value})",
+        };
+
     public override void Draw()
     {
-        if (ImGui.BeginCombo("Default Language", GetNameFromEnum(Configuration.defaultLanguage)))
-        {
-            foreach (CutsceneMovieVoiceValue csVoice in Enum.GetValues(typeof(CutsceneMovieVoiceValue)))
-            {
-                if (ImGui.Selectable(GetNameFromEnum(csVoice), Configuration.defaultLanguage == csVoice))
-                {
-                    Plugin.Logger.Debug("selected:" + GetNameFromEnum(csVoice));
-                    Configuration.defaultLanguage = csVoice;
-                    Configuration.Save();
-                }
-            }
-            ImGui.EndCombo();
-
-        }
+        this.DrawDefaultLanguagePicker();
         ImGui.Separator();
-        //Based on the plugin filter combo in the dalamud console
-        //https://github.com/goatcorp/Dalamud/blob/master/Dalamud/Interface/Internal/Windows/ConsoleWindow.cs#L705
-        string resolvedName = _selected.RowId != 0 ? _selected.Name.ToString() : "Duty name";
-        if (ImGui.BeginCombo("Duty Picker",resolvedName, ImGuiComboFlags.HeightLarge))
-        {
-            var sourceNames = contents.Where(c => c.Name != "")//remove empty or null entries
-                              .Where(c => c.Name.ToString().IndexOf(_filter,StringComparison.OrdinalIgnoreCase) != -1)
-                              .ToList();
-            ImGui.PushItemWidth(ImGui.GetContentRegionAvail().X);
-            ImGui.InputTextWithHint("##ContentSearchFilter", "Search duties...", ref _filter, 300);
-            ImGui.Separator();
-
-            if (!sourceNames.Any())
-            {
-                ImGui.Text("No matches found");
-            }
-
-            foreach (ContentFinderCondition selectable in sourceNames)
-            {
-                if (ImGui.Selectable(selectable.Name.ToString(),selectable.RowId == _selected.RowId))
-                    {
-                    _selected = selectable;
-
-                }
-            }
-            ImGui.EndCombo();
-        }
-        
-        
-        if (ImGui.BeginCombo("Language picker", GetNameFromEnum(language_sel)))
-        {
-            foreach (CutsceneMovieVoiceValue csVoice in Enum.GetValues(typeof(CutsceneMovieVoiceValue)))
-            {
-                if (ImGui.Selectable(GetNameFromEnum(csVoice), csVoice == language_sel))
-                    {
-                        Plugin.Logger.Debug("selected:" + GetNameFromEnum(csVoice));
-                    language_sel = csVoice;
-                    }
-            }
-            ImGui.EndCombo();
-        }
-        if (ImGui.Button("Add changes"))
-        {
-            try
-            {
-                Dictionary<ushort, CutsceneMovieVoiceValue> rep = Configuration.replacements;
-                rep.Add((ushort)_selected.Content.RowId, language_sel);
-                Configuration.replacements = rep;
-                Configuration.Save();
-                Plugin.Logger.Debug("Added replacement for content id:{0} with language {1}", [_selected.Content.RowId, language_sel]);
-                _error = false;
-            }
-            catch (ArgumentException e)
-            {
-                _error = true;
-                Plugin.Logger.Debug("Tried to add replacement for content id:{0} but a key already exist:{1}", _selected,e.ToString());
-            }
-        }
-        if (_error)
-        {
-            ImGui.Text("Could not add your change because a change for this duty already exist,delete the existing one");
-        }
+        this.DrawDutyPicker();
+        this.DrawVoicePicker();
+        this.DrawSaveButton();
+        this.DrawStatusMessage();
         ImGui.Separator();
-        ImGui.Text("List of current changes");
-        if (ImGui.BeginTable("changetable", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.Resizable))
-        {
-            ImGui.TableNextColumn();
-            ImGui.Text("Maps");
-            ImGui.TableNextColumn();
-            ImGui.Text("Voice");
-            foreach (KeyValuePair<ushort,CutsceneMovieVoiceValue> entry in Configuration.replacements)
-            {
-                ImGui.TableNextColumn();
-                var itemCFC = contents.FirstOrNull(x => x.Content.RowId == entry.Key);
-                var itemName = itemCFC?.Name.ToString() ?? "This zone is no longer in the game,You can safely delete this";
-                ImGui.Text(itemName);
-                ImGui.TableNextColumn();
-                ImGui.Text(GetNameFromEnum(entry.Value));
-                ImGui.SameLine();
-                ImGui.PushID(entry.Key);
-                if (ImGui.SmallButton("Remove"))
-                {
-                    Dictionary<ushort, CutsceneMovieVoiceValue> rep = Configuration.replacements;
-                    rep.Remove(entry.Key);
-                    Configuration.replacements = rep;
-                    Configuration.Save();
-                    var cfc = itemCFC?.Content.RowId ?? 0;
-                    Plugin.Logger.Debug("Removed replacement for map id:{0} with language {1}", [cfc , entry.Value]);
-                }
-                ImGui.PopID();
-            }
-            ImGui.EndTable();
-        }
-
-
-        }
-
+        this.DrawReplacementTable();
     }
+
+    private static IReadOnlyDictionary<ushort, string> BuildDutyNameMap(IEnumerable<ContentFinderCondition> duties)
+    {
+        var names = new Dictionary<ushort, string>();
+        foreach (var duty in duties)
+        {
+            var contentId = duty.Content.RowId;
+            if (contentId is 0 or > ushort.MaxValue)
+            {
+                continue;
+            }
+
+            names.TryAdd((ushort)contentId, duty.Name.ToString());
+        }
+
+        return names;
+    }
+
+    private void DrawDefaultLanguagePicker()
+    {
+        if (!ImGui.BeginCombo("Default Language", GetNameFromEnum(this.configuration.defaultLanguage)))
+        {
+            return;
+        }
+
+        foreach (CutsceneMovieVoiceValue voice in Enum.GetValues(typeof(CutsceneMovieVoiceValue)))
+        {
+            if (!ImGui.Selectable(GetNameFromEnum(voice), this.configuration.defaultLanguage == voice))
+            {
+                continue;
+            }
+
+            this.configuration.defaultLanguage = voice;
+            this.configuration.Save();
+            this.log.Debug("Updated default language to {Language}.", voice);
+        }
+
+        ImGui.EndCombo();
+    }
+
+    private void DrawDutyPicker()
+    {
+        if (!ImGui.BeginCombo("Duty Picker", this.GetSelectedDutyName(), ImGuiComboFlags.HeightLarge))
+        {
+            return;
+        }
+
+        ImGui.InputTextWithHint("##ContentSearchFilter", "Search duties...", ref this.filter, 300);
+        ImGui.Separator();
+
+        var filteredDuties = this.selectableDuties
+            .Where(content => content.Name.ToString().Contains(this.filter, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        if (filteredDuties.Count == 0)
+        {
+            ImGui.TextUnformatted("No matches found.");
+        }
+        else
+        {
+            foreach (var duty in filteredDuties)
+            {
+                if (ImGui.Selectable(duty.Name.ToString(), duty.RowId == this.selectedContentFinderConditionId))
+                {
+                    this.selectedContentFinderConditionId = duty.RowId;
+                }
+            }
+        }
+
+        ImGui.EndCombo();
+    }
+
+    private void DrawVoicePicker()
+    {
+        if (!ImGui.BeginCombo("Language Picker", GetNameFromEnum(this.selectedLanguage)))
+        {
+            return;
+        }
+
+        foreach (CutsceneMovieVoiceValue voice in Enum.GetValues(typeof(CutsceneMovieVoiceValue)))
+        {
+            if (ImGui.Selectable(GetNameFromEnum(voice), voice == this.selectedLanguage))
+            {
+                this.selectedLanguage = voice;
+            }
+        }
+
+        ImGui.EndCombo();
+    }
+
+    private void DrawSaveButton()
+    {
+        if (!ImGui.Button("Save Duty Override"))
+        {
+            return;
+        }
+
+        if (this.selectedContentFinderConditionId == 0)
+        {
+            this.SetStatus("Select a duty before saving a voice override.", true);
+            return;
+        }
+
+        if (!this.contents.TryGetRow(this.selectedContentFinderConditionId, out var duty))
+        {
+            this.SetStatus("Could not resolve the selected duty row.", true);
+            return;
+        }
+
+        var contentId = duty.Content.RowId;
+        if (contentId is 0 or > ushort.MaxValue)
+        {
+            this.SetStatus("The selected duty does not expose a valid content identifier.", true);
+            return;
+        }
+
+        var replacementKey = (ushort)contentId;
+        var updatedExisting = this.configuration.replacements.ContainsKey(replacementKey);
+        this.configuration.replacements[replacementKey] = this.selectedLanguage;
+        this.configuration.Save();
+
+        var action = updatedExisting ? "Updated" : "Saved";
+        this.SetStatus($"{action} override for {duty.Name} -> {GetNameFromEnum(this.selectedLanguage)}.", false);
+        this.log.Debug(
+            "{Action} replacement for content id {ContentId} with language {Language}.",
+            action,
+            replacementKey,
+            this.selectedLanguage);
+    }
+
+    private void DrawStatusMessage()
+    {
+        if (string.IsNullOrWhiteSpace(this.statusMessage))
+        {
+            return;
+        }
+
+        if (this.statusIsError)
+        {
+            ImGui.TextColored(new Vector4(0.9f, 0.3f, 0.3f, 1f), this.statusMessage);
+            return;
+        }
+
+        ImGui.TextColored(new Vector4(0.4f, 0.85f, 0.45f, 1f), this.statusMessage);
+    }
+
+    private void DrawReplacementTable()
+    {
+        ImGui.TextUnformatted("Current Duty Overrides");
+
+        if (!ImGui.BeginTable("changeTable", 3, ImGuiTableFlags.Borders | ImGuiTableFlags.Resizable | ImGuiTableFlags.RowBg))
+        {
+            return;
+        }
+
+        ImGui.TableSetupColumn("Duty");
+        ImGui.TableSetupColumn("Voice");
+        ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthFixed, 80f);
+        ImGui.TableHeadersRow();
+
+        foreach (var entry in this.configuration.replacements.OrderBy(entry => this.ResolveDutyName(entry.Key), StringComparer.OrdinalIgnoreCase))
+        {
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            ImGui.TextUnformatted(this.ResolveDutyName(entry.Key));
+
+            ImGui.TableNextColumn();
+            ImGui.TextUnformatted(GetNameFromEnum(entry.Value));
+
+            ImGui.TableNextColumn();
+            ImGui.PushID((int)entry.Key);
+            if (ImGui.SmallButton("Remove"))
+            {
+                this.configuration.replacements.Remove(entry.Key);
+                this.configuration.Save();
+                this.SetStatus($"Removed override for {this.ResolveDutyName(entry.Key)}.", false);
+                this.log.Debug("Removed replacement for content id {ContentId}.", entry.Key);
+            }
+
+            ImGui.PopID();
+        }
+
+        ImGui.EndTable();
+    }
+
+    private string GetSelectedDutyName()
+    {
+        if (this.selectedContentFinderConditionId == 0)
+        {
+            return "Duty name";
+        }
+
+        if (!this.contents.TryGetRow(this.selectedContentFinderConditionId, out var duty))
+        {
+            return "Duty name";
+        }
+
+        return duty.Name.ToString();
+    }
+
+    private string ResolveDutyName(ushort contentId)
+    {
+        if (this.dutyNamesByContentId.TryGetValue(contentId, out var dutyName))
+        {
+            return dutyName;
+        }
+
+        return $"Unknown or removed duty ({contentId})";
+    }
+
+    private void SetStatus(string message, bool isError)
+    {
+        this.statusMessage = message;
+        this.statusIsError = isError;
+    }
+}
