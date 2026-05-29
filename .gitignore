@@ -3,3 +3,4 @@ obj/
 bin/
 *.user
 SamplePlugin/Map.csv
+/out/
