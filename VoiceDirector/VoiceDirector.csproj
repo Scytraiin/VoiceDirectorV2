@@ -1,11 +1,11 @@
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
   <PropertyGroup>
-    <Authors>Noevain</Authors>
-    <Version>1.6.1</Version>
-    <AssemblyVersion>1.6.1.0</AssemblyVersion>
-    <FileVersion>1.6.1.0</FileVersion>
+    <Authors>ScytRaiin</Authors>
+    <Version>1.6.2</Version>
+    <AssemblyVersion>1.6.2.0</AssemblyVersion>
+    <FileVersion>1.6.2.0</FileVersion>
     <Description>Changes the cutscene voice language on a per-duty basis and restores a default outside configured content.</Description>
-    <PackageProjectUrl>https://github.com/noevain/VoiceDirector</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/Scytraiin/VoiceDirectorV2</PackageProjectUrl>
     <IsPackable>false</IsPackable>
     <TargetFramework>net10.0-windows</TargetFramework>
     <Nullable>enable</Nullable>

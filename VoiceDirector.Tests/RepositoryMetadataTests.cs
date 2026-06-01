@@ -13,7 +13,7 @@ public sealed class RepositoryMetadataTests
 
         Assert.Equal(JsonValueKind.Array, root.ValueKind);
         var pluginEntry = Assert.Single(root.EnumerateArray());
-        Assert.Equal("Noevain", pluginEntry.GetProperty("Author").GetString());
+        Assert.Equal("ScytRaiin", pluginEntry.GetProperty("Author").GetString());
         Assert.Equal("VoiceDirector", pluginEntry.GetProperty("InternalName").GetString());
         Assert.Equal(15, pluginEntry.GetProperty("DalamudApiLevel").GetInt32());
         Assert.False(pluginEntry.GetProperty("IsHide").GetBoolean());

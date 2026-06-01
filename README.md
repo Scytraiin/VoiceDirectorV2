@@ -38,11 +38,11 @@ docker build -t voice-director-ci .
 docker run --rm voice-director-ci
 ```
 
-To build the actual plugin package, mount a valid Dalamud dev folder. The `FFYIV/15.0.0.2/dev` bundle in this repo can be used as the reference runtime:
+To build the actual plugin package, mount a valid Dalamud dev folder:
 
 ```bash
 docker run --rm \
-  -v "$PWD/FFYIV/15.0.0.2/dev:/dalamud:ro" \
+  -v "/path/to/your/15.0.0.2/dev:/dalamud:ro" \
   -v "$PWD/out:/out" \
   voice-director-ci
 ```
@@ -63,14 +63,14 @@ out/release/
 
 Current release target:
 
-- the current release target is `v1.6.1`
+- the current release target is `v1.6.2`
 - package: `out/release/latest.zip`
 - repo metadata: `out/release/scyt.repo.json`
 
 Manual release flow:
 
 1. Update the plugin version and release notes.
-2. Run `python3 scripts/prepare_release.py --workspace "$PWD" --version "<version>"`.
+2. Run `python3 scripts/prepare_release.py --workspace "$PWD" --version "<version>" --dalamud-dev-path "/path/to/your/15.0.0.2/dev"`.
 3. Smoke test in game.
 4. Create the GitHub release tag.
 5. Upload `latest.zip`.
@@ -79,11 +79,11 @@ Manual release flow:
 ## Status
 
 - Dalamud API target: 15.
-- Current plugin version: `1.6.1`.
-- Runtime build should be validated against a Dalamud 15 dev bundle such as `FFYIV/15.0.0.2/dev`.
+- Current plugin version: `1.6.2`.
+- Runtime build should be validated against a local Dalamud 15 dev bundle.
 
 ## Preview
 
-![UI preview](https://raw.githubusercontent.com/noevain/VoiceDirector/master/images/preview1.png)
+![UI preview](https://raw.githubusercontent.com/Scytraiin/VoiceDirectorV2/main/images/preview1.png)
 
 This repository is forked from the original Voice Director repository because the original project is no longer maintained for recent FFXIV / Dalamud versions.

@@ -23,7 +23,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--version", required=True, help="Release version, with or without leading v.")
     parser.add_argument(
         "--dalamud-dev-path",
-        help="Path to the Dalamud Hooks/dev folder. Defaults to <workspace>/FFYIV/15.0.0.2/dev.",
+        help="Path to the Dalamud Hooks/dev folder.",
     )
     return parser.parse_args()
 
@@ -79,7 +79,8 @@ def update_repo_json(path: Path, version: str, tag: str, assembly_version: str) 
     entry["AssemblyVersion"] = assembly_version
     entry["TestingAssemblyVersion"] = assembly_version
     entry["LastUpdate"] = int(time.time())
-    url = f"https://github.com/noevain/VoiceDirector/releases/download/{tag}/latest.zip"
+    repo_url = entry["RepoUrl"].rstrip("/")
+    url = f"{repo_url}/releases/download/{tag}/latest.zip"
     entry["DownloadLinkInstall"] = url
     entry["DownloadLinkTesting"] = url
     entry["DownloadLinkUpdate"] = url
@@ -109,25 +110,21 @@ def main() -> int:
     workspace = Path(args.workspace).expanduser().resolve()
     version, tag, assembly_version = normalize_version(args.version)
 
-    dalamud_dev = (
-        Path(args.dalamud_dev_path).expanduser().resolve()
-        if args.dalamud_dev_path
-        else (workspace / "FFYIV" / "15.0.0.2" / "dev").resolve()
-    )
+    dalamud_dev = Path(args.dalamud_dev_path).expanduser().resolve() if args.dalamud_dev_path else None
 
     if not workspace.is_dir():
         raise RuntimeError(f"Workspace does not exist: {workspace}")
+    if dalamud_dev is None:
+        raise RuntimeError("Provide --dalamud-dev-path with a valid Dalamud Hooks/dev folder.")
     if not dalamud_dev.is_dir():
         raise RuntimeError(f"Dalamud dev folder does not exist: {dalamud_dev}")
 
     csproj = workspace / "VoiceDirector" / "VoiceDirector.csproj"
     repo_json = workspace / "scyt.repo.json"
-    alt_repo_json = workspace / "repo.json"
     root_readme = workspace / "README.md"
 
     update_csproj(csproj, version, assembly_version)
     update_repo_json(repo_json, version, tag, assembly_version)
-    update_repo_json(alt_repo_json, version, tag, assembly_version)
     update_readme(
         root_readme,
         r"- the current release target is `[^`]+`",
