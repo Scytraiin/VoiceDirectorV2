@@ -119,7 +119,7 @@ def main() -> int:
     if not dalamud_dev.is_dir():
         raise RuntimeError(f"Dalamud dev folder does not exist: {dalamud_dev}")
 
-    csproj = workspace / "VoiceDirector" / "VoiceDirector.csproj"
+    csproj = workspace / "VoiceDirector" / "VoiceDirectorV2.csproj"
     repo_json = workspace / "scyt.repo.json"
     root_readme = workspace / "README.md"
 
@@ -157,15 +157,15 @@ def main() -> int:
     release_dir = out_dir / "release"
     release_dir.mkdir(parents=True, exist_ok=True)
 
-    built_zip = out_dir / "plugin" / "VoiceDirector" / "latest.zip"
+    built_zip = out_dir / "plugin" / "VoiceDirectorV2" / "latest.zip"
     if not built_zip.is_file():
         raise RuntimeError(f"Expected built zip at {built_zip}.")
     shutil.copy2(built_zip, release_dir / "latest.zip")
     shutil.copy2(repo_json, release_dir / "scyt.repo.json")
 
-    verify_contains(out_dir / "plugin" / "VoiceDirector.deps.json", f"VoiceDirector/{version}")
+    verify_contains(out_dir / "plugin" / "VoiceDirectorV2.deps.json", f"VoiceDirectorV2/{version}")
     verify_contains(
-        out_dir / "plugin" / "VoiceDirector" / "VoiceDirector.json",
+        out_dir / "plugin" / "VoiceDirectorV2" / "VoiceDirectorV2.json",
         f'"AssemblyVersion": "{assembly_version}"',
     )
     verify_contains(release_dir / "scyt.repo.json", tag)

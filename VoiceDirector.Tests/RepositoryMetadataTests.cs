@@ -14,7 +14,7 @@ public sealed class RepositoryMetadataTests
         Assert.Equal(JsonValueKind.Array, root.ValueKind);
         var pluginEntry = Assert.Single(root.EnumerateArray());
         Assert.Equal("ScytRaiin", pluginEntry.GetProperty("Author").GetString());
-        Assert.Equal("VoiceDirector", pluginEntry.GetProperty("InternalName").GetString());
+        Assert.Equal("VoiceDirectorV2", pluginEntry.GetProperty("InternalName").GetString());
         Assert.Equal(15, pluginEntry.GetProperty("DalamudApiLevel").GetInt32());
         Assert.False(pluginEntry.GetProperty("IsHide").GetBoolean());
         Assert.False(pluginEntry.GetProperty("IsTestingExclusive").GetBoolean());
@@ -24,7 +24,7 @@ public sealed class RepositoryMetadataTests
     public void ScytRepoJson_AlignsWithPluginManifest()
     {
         var repoEntry = Assert.Single(LoadJsonDocument("scyt.repo.json").RootElement.EnumerateArray());
-        var manifest = LoadJsonDocument("VoiceDirector.json").RootElement;
+        var manifest = LoadJsonDocument("VoiceDirectorV2.json").RootElement;
 
         Assert.Equal(manifest.GetProperty("Author").GetString(), repoEntry.GetProperty("Author").GetString());
         Assert.Equal(manifest.GetProperty("InternalName").GetString(), repoEntry.GetProperty("InternalName").GetString());

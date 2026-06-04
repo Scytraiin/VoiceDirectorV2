@@ -20,6 +20,6 @@
 
   <ItemGroup>
     <None Include="..\scyt.repo.json" Link="TestData\scyt.repo.json" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="..\VoiceDirector\VoiceDirector.json" Link="TestData\VoiceDirector.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\VoiceDirector\VoiceDirectorV2.json" Link="TestData\VoiceDirectorV2.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

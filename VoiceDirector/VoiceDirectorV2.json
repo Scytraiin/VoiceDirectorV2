@@ -1,17 +1,17 @@
 {
   "Author": "ScytRaiin",
-  "Name": "Voice Director",
+  "Name": "VoiceDirectorV2",
   "Punchline": "Changes your VO language on a per-duty basis.",
   "Description": "Changes the cutscene voice language for configured duties and restores your default selection elsewhere. Icon designed by Leremy from Flaticon.",
   "RepoUrl": "https://github.com/Scytraiin/VoiceDirectorV2",
-  "IconUrl": "https://raw.githubusercontent.com/Scytraiin/VoiceDirectorV2/main/images/icon.png",
-  "InternalName": "VoiceDirector",
+  "IconUrl": "https://raw.githubusercontent.com/Scytraiin/VoiceDirectorV2/master/images/icon.png",
+  "InternalName": "VoiceDirectorV2",
   "ApplicableVersion": "any",
   "ImageUrls": [
-    "https://raw.githubusercontent.com/Scytraiin/VoiceDirectorV2/main/images/preview1.png"
+    "https://raw.githubusercontent.com/Scytraiin/VoiceDirectorV2/master/images/preview1.png"
   ],
   "Tags": [
-    "plugin",
+    "utility",
     "audio",
     "quality-of-life"
   ]

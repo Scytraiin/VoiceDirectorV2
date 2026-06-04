@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34607.119
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VoiceDirector", "VoiceDirector\VoiceDirector.csproj", "{13C812E9-0D42-4B95-8646-40EEBF30636F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VoiceDirectorV2", "VoiceDirector\VoiceDirectorV2.csproj", "{13C812E9-0D42-4B95-8646-40EEBF30636F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VoiceDirector.Tests", "VoiceDirector.Tests\VoiceDirector.Tests.csproj", "{E1E4EC79-D6D4-42D6-85A3-B97850E9BFCC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VoiceDirectorV2.Tests", "VoiceDirector.Tests\VoiceDirectorV2.Tests.csproj", "{E1E4EC79-D6D4-42D6-85A3-B97850E9BFCC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
