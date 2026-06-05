@@ -84,7 +84,7 @@ def update_repo_json(path: Path, version: str, tag: str, assembly_version: str) 
     entry["DownloadLinkInstall"] = url
     entry["DownloadLinkTesting"] = url
     entry["DownloadLinkUpdate"] = url
-    entry["Changelog"] = f"Voice Director {version} release."
+    entry["Changelog"] = f"VoiceDirectorV2 {version} release."
     path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 
 

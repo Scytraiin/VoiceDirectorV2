@@ -62,6 +62,7 @@ public sealed class ConfigWindow : Window, IDisposable
     public override void Draw()
     {
         this.DrawDefaultLanguagePicker();
+        this.DrawWipeLanguageToggle();
         ImGui.Separator();
         this.DrawDutyPicker();
         this.DrawVoicePicker();
@@ -108,6 +109,19 @@ public sealed class ConfigWindow : Window, IDisposable
         }
 
         ImGui.EndCombo();
+    }
+
+    private void DrawWipeLanguageToggle()
+    {
+        var enabled = this.configuration.selectRandomLanguageAfterWipe;
+        if (!ImGui.Checkbox("Select random language after wipe", ref enabled))
+        {
+            return;
+        }
+
+        this.configuration.selectRandomLanguageAfterWipe = enabled;
+        this.configuration.Save();
+        this.log.Debug("Updated wipe randomization setting to {Enabled}.", enabled);
     }
 
     private void DrawDutyPicker()

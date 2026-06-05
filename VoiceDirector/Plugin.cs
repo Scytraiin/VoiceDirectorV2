@@ -1,6 +1,7 @@
 using System;
 
 using Dalamud.Game.Command;
+using Dalamud.Game.DutyState;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
@@ -20,18 +21,22 @@ public sealed class Plugin : IDalamudPlugin
     private readonly ICommandManager commandManager;
     private readonly IClientState clientState;
     private readonly IDataManager dataManager;
+    private readonly IDutyState dutyState;
     private readonly IGameConfig gameConfig;
     private readonly IPluginLog log;
     private readonly WindowSystem windowSystem = new("VoiceDirector");
     private readonly ConfigWindow configWindow;
     private readonly MainWindow mainWindow;
     private readonly Configuration configuration;
+    private readonly Random random = new();
+    private CutsceneMovieVoiceValue? temporaryWipeLanguage;
 
     public Plugin(
         IDalamudPluginInterface pluginInterface,
         ICommandManager commandManager,
         IClientState clientState,
         IDataManager dataManager,
+        IDutyState dutyState,
         IGameConfig gameConfig,
         IPluginLog log)
     {
@@ -39,6 +44,7 @@ public sealed class Plugin : IDalamudPlugin
         this.commandManager = commandManager;
         this.clientState = clientState;
         this.dataManager = dataManager;
+        this.dutyState = dutyState;
         this.gameConfig = gameConfig;
         this.log = log;
 
@@ -60,12 +66,16 @@ public sealed class Plugin : IDalamudPlugin
         this.pluginInterface.UiBuilder.OpenMainUi += this.OpenMainUi;
         this.pluginInterface.UiBuilder.OpenConfigUi += this.OpenConfigUi;
         this.clientState.TerritoryChanged += this.OnTerritoryChanged;
+        this.dutyState.DutyWiped += this.OnDutyWiped;
+        this.dutyState.DutyRecommenced += this.OnDutyRecommenced;
 
         this.log.Information("Voice Director initialized.");
     }
 
     public void Dispose()
     {
+        this.dutyState.DutyRecommenced -= this.OnDutyRecommenced;
+        this.dutyState.DutyWiped -= this.OnDutyWiped;
         this.clientState.TerritoryChanged -= this.OnTerritoryChanged;
         this.pluginInterface.UiBuilder.Draw -= this.DrawUi;
         this.pluginInterface.UiBuilder.OpenMainUi -= this.OpenMainUi;
@@ -93,11 +103,49 @@ public sealed class Plugin : IDalamudPlugin
     {
         try
         {
+            this.temporaryWipeLanguage = null;
             this.ApplyConfiguredVoice(this.ResolveContentId(territoryType));
         }
         catch (Exception ex)
         {
             this.log.Error(ex, "Failed to update cutscene voice for territory change {TerritoryType}.", territoryType);
+        }
+    }
+
+    private void OnDutyWiped(IDutyStateEventArgs args)
+    {
+        try
+        {
+            if (!this.configuration.selectRandomLanguageAfterWipe)
+            {
+                return;
+            }
+
+            this.temporaryWipeLanguage = GetRandomVoiceLanguage();
+            this.ApplyConfiguredVoice(this.ResolveContentId(this.clientState.TerritoryType));
+            this.log.Debug("Selected temporary wipe language {Language} for content {ContentId}.", this.temporaryWipeLanguage, args.ContentFinderCondition.RowId);
+        }
+        catch (Exception ex)
+        {
+            this.log.Error(ex, "Failed to select a temporary wipe language.");
+        }
+    }
+
+    private void OnDutyRecommenced(IDutyStateEventArgs args)
+    {
+        try
+        {
+            if (this.temporaryWipeLanguage is null)
+            {
+                return;
+            }
+
+            this.ApplyConfiguredVoice(this.ResolveContentId(this.clientState.TerritoryType));
+            this.log.Debug("Reapplied temporary wipe language {Language} on recommence for content {ContentId}.", this.temporaryWipeLanguage, args.ContentFinderCondition.RowId);
+        }
+        catch (Exception ex)
+        {
+            this.log.Error(ex, "Failed to reapply temporary wipe language on recommence.");
         }
     }
 
@@ -128,6 +176,7 @@ public sealed class Plugin : IDalamudPlugin
         var currentVoice = (ushort)this.gameConfig.System.GetUInt(CutsceneMovieVoiceKey);
         var desiredVoice = VoiceSelectionResolver.ResolveDesiredVoice(
             this.configuration.replacements,
+            this.temporaryWipeLanguage,
             contentId,
             this.configuration.defaultLanguage,
             currentVoice);
@@ -143,6 +192,12 @@ public sealed class Plugin : IDalamudPlugin
             CutsceneMovieVoiceKey,
             desiredVoice.Value,
             contentId?.ToString() ?? "default");
+    }
+
+    private CutsceneMovieVoiceValue GetRandomVoiceLanguage()
+    {
+        var availableVoices = Enum.GetValues<CutsceneMovieVoiceValue>();
+        return availableVoices[this.random.Next(availableVoices.Length)];
     }
 
     private void DrawUi()

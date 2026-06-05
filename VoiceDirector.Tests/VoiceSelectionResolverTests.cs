@@ -14,6 +14,7 @@ public sealed class VoiceSelectionResolverTests
 
         var resolved = VoiceSelectionResolver.ResolveDesiredVoice(
             replacements,
+            null,
             77,
             CutsceneMovieVoiceValue.English,
             (ushort)CutsceneMovieVoiceValue.English);
@@ -26,6 +27,7 @@ public sealed class VoiceSelectionResolverTests
     {
         var resolved = VoiceSelectionResolver.ResolveDesiredVoice(
             new Dictionary<ushort, CutsceneMovieVoiceValue>(),
+            null,
             88,
             CutsceneMovieVoiceValue.English,
             (ushort)CutsceneMovieVoiceValue.French);
@@ -39,8 +41,38 @@ public sealed class VoiceSelectionResolverTests
         var resolved = VoiceSelectionResolver.ResolveDesiredVoice(
             new Dictionary<ushort, CutsceneMovieVoiceValue>(),
             null,
+            null,
             CutsceneMovieVoiceValue.English,
             (ushort)CutsceneMovieVoiceValue.English);
+
+        Assert.Null(resolved);
+    }
+
+    [Fact]
+    public void ResolveDesiredVoice_ReturnsTemporaryOverride_WhenPresent()
+    {
+        var resolved = VoiceSelectionResolver.ResolveDesiredVoice(
+            new Dictionary<ushort, CutsceneMovieVoiceValue>
+            {
+                [77] = CutsceneMovieVoiceValue.German,
+            },
+            CutsceneMovieVoiceValue.French,
+            77,
+            CutsceneMovieVoiceValue.English,
+            (ushort)CutsceneMovieVoiceValue.English);
+
+        Assert.Equal(CutsceneMovieVoiceValue.French, resolved);
+    }
+
+    [Fact]
+    public void ResolveDesiredVoice_ReturnsNull_WhenAlreadyOnTemporaryOverride()
+    {
+        var resolved = VoiceSelectionResolver.ResolveDesiredVoice(
+            new Dictionary<ushort, CutsceneMovieVoiceValue>(),
+            CutsceneMovieVoiceValue.Japanese,
+            77,
+            CutsceneMovieVoiceValue.English,
+            (ushort)CutsceneMovieVoiceValue.Japanese);
 
         Assert.Null(resolved);
     }

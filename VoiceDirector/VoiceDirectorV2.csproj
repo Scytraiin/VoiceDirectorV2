@@ -2,9 +2,9 @@
   <PropertyGroup>
     <AssemblyName>VoiceDirectorV2</AssemblyName>
     <Authors>ScytRaiin</Authors>
-    <Version>1.6.3</Version>
-    <AssemblyVersion>1.6.3.0</AssemblyVersion>
-    <FileVersion>1.6.3.0</FileVersion>
+    <Version>1.7.0</Version>
+    <AssemblyVersion>1.7.0.0</AssemblyVersion>
+    <FileVersion>1.7.0.0</FileVersion>
     <Description>Changes the cutscene voice language on a per-duty basis and restores a default outside configured content.</Description>
     <PackageProjectUrl>https://github.com/Scytraiin/VoiceDirectorV2</PackageProjectUrl>
     <IsPackable>false</IsPackable>

@@ -63,7 +63,7 @@ out/release/
 
 Current release target:
 
-- the current release target is `v1.6.3`
+- the current release target is `v1.7.0`
 - package: `out/release/latest.zip`
 - repo metadata: `out/release/scyt.repo.json`
 
@@ -79,7 +79,7 @@ Manual release flow:
 ## Status
 
 - Dalamud API target: 15.
-- Current plugin version: `1.6.3`.
+- Current plugin version: `1.7.0`.
 - Runtime build should be validated against a local Dalamud 15 dev bundle.
 
 ## Preview

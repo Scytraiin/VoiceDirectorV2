@@ -15,6 +15,8 @@ public sealed class Configuration : IPluginConfiguration
 
     public CutsceneMovieVoiceValue defaultLanguage { get; set; } = CutsceneMovieVoiceValue.English;
 
+    public bool selectRandomLanguageAfterWipe { get; set; }
+
     public Dictionary<ushort, CutsceneMovieVoiceValue> replacements { get; set; } = [];
 
     public void Initialize(IDalamudPluginInterface pluginInterface)
